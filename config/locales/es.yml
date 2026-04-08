@@ -1,0 +1,306 @@
+es:
+  # ── Number / Currency (Argentina) ──────────────────────────────
+  number:
+    currency:
+      format:
+        unit: "$"
+        format: "%u%n"
+        delimiter: "."
+        separator: ","
+        precision: 2
+
+  # ── Shared / Common ──────────────────────────────────────────
+  shared:
+    "yes": "Sí"
+    "no": "No"
+    actions: "Acciones"
+    save: "Guardar"
+    cancel: "Cancelar"
+    delete: "Eliminar"
+    edit: "Editar"
+    back: "Volver"
+    search: "Buscar"
+    group: "Grupo"
+    confirm: "Confirmar"
+    filters: "Filtros"
+    clear_all: "Limpiar filtros"
+    all: "Todos"
+    from: "Desde"
+    to: "Hasta"
+    page_not_found: "La página solicitada no existe."
+
+  # ── Common labels (reused across models) ─────────────────────
+  labels:
+    name: "Nombre"
+    number: "Número"
+    date: "Fecha"
+    active: "Activo"
+    details: "Detalles"
+    period: "Periodo"
+    total: "Total"
+    legal_name: "Razón social"
+    legal_number: "CUIT/CUIL"
+    tax_condition: "Condición fiscal"
+    sell_point: "Punto de Venta"
+    client: "Cliente"
+    invoice_type: "Tipo"
+    invoice_type_label: "Tipo de factura"
+    unit_price: "Precio unitario"
+    final_price: "Precio final"
+    quantity: "Cantidad"
+    product: "Producto"
+    description: "Descripción"
+    percentage: "Porcentaje"
+    default: "Predeterminado"
+    code: "Código"
+    price: "Precio"
+    email: "Email"
+    password: "Contraseña"
+    password_confirmation: "Confirma la contraseña"
+    remember_me: "Recordarme"
+    account_number: "Número de cuenta"
+    alias_account: "Alias de cuenta"
+    address: "Dirección"
+    zip_code: "Código postal"
+    city: "Ciudad"
+    state: "Provincia"
+    state_full: "Provincia / Estado"
+    country: "País"
+    cai: "CAI"
+    activity_start: "Inicio de actividad"
+    iva_condition: "Condición frente al IVA"
+    client_group: "Grupo de clientes"
+    download_pdf: "Descargar PDF"
+    download_pdfs: "Descargar PDFs"
+    generate_pdfs: "Generar PDFs"
+
+  # ── Tax Conditions ─────────────────────────────────────────────
+  tax_conditions:
+    final_client: "Consumidor final"
+    registered: "Responsable Inscripto"
+    exempt: "Exento de IVA"
+    self_employed: "Autónomo / Independiente"
+
+  # ── Navbar ────────────────────────────────────────────────────
+  navbar:
+    home: "Inicio"
+    clients: "Clientes"
+    invoices: "Facturas"
+    products: "Productos"
+    extras: "Extras"
+    ivas: "IVAS"
+    sell_points: "Puntos de venta"
+    client_groups: "Grupos de clientes"
+    invoicing: "Facturación"
+    admin: "Admin"
+    batch_processes: "Procesos de facturación"
+
+  # ── Landing ───────────────────────────────────────────────────
+  landing:
+    welcome: "Bienvenido a De manteca"
+    subtitle: "El facturador automático de Arca que te simplificará tu trabajo"
+    sign_in: "Iniciar sesión"
+
+  # ── Devise ────────────────────────────────────────────────────
+  devise_views:
+    sign_in: "Iniciar Sesión"
+    sign_in_button: "Iniciar sesión"
+    forgot_password: "Olvidaste la contraseña?"
+    no_account: "No tenes una cuenta?"
+    register: "Registrate"
+    create_account: "Crea tu cuenta"
+    create_account_error: "No se pudo crear la cuenta:"
+    register_button: "Registrarse"
+    sign_up: "Registrarse"
+    confirmation_instructions: "No recibiste las instrucciones de confirmación?"
+    unlock_instructions: "No recibiste las instrucciones de desbloqueo?"
+
+  # ── Clients ───────────────────────────────────────────────────
+  clients:
+    index:
+      title: "Clientes"
+      model: "cliente"
+    form:
+      errors: "No se pudo guardar el cliente:"
+    flash:
+      created: "Cliente creado exitosamente."
+      updated: "Cliente actualizado exitosamente."
+      destroyed: "Cliente eliminado correctamente."
+
+  # ── Client Invoices ───────────────────────────────────────────
+  client_invoices:
+    index:
+      title: "Facturas"
+      model: "factura"
+      sell_point_short: "Pto. Venta"
+      credit_notes: "Notas de crédito"
+    new:
+      title: "Crear factura"
+    edit:
+      title: "Editando factura"
+    form:
+      select_sell_point: "Seleccionar punto de venta"
+      select_client: "Seleccionar cliente"
+      products: "Productos"
+      add_product: "Agregar producto"
+    show:
+      products: "Productos"
+    flash:
+      created: "Factura creada exitosamente."
+      updated: "Factura actualizada exitosamente."
+      destroyed: "Factura eliminada correctamente."
+      already_sent: "La factura ya fue informada a ARCA"
+      sent_success: "Factura exitosamente informada a ARCA."
+      not_found: "Factura no encontrada."
+      pdf_not_available: "El PDF no está disponible. La factura debe tener CAE."
+
+  # ── Credit Notes ──────────────────────────────────────────────
+  credit_notes:
+    index:
+      title: "Notas de Crédito"
+      model: "nota de crédito"
+      sell_point_short: "Pto. Venta"
+      associated_invoice: "Factura asociada"
+    new:
+      title: "Crear nota de crédito"
+    edit:
+      title: "Editando nota de crédito"
+    form:
+      select_sell_point: "Seleccionar punto de venta"
+      select_client: "Seleccionar cliente"
+      products: "Productos"
+      add_product: "Agregar producto"
+    show:
+      products: "Productos"
+    flash:
+      created: "Nota de crédito creada"
+      updated: "Nota de crédito actualizada"
+      destroyed: "Nota de crédito eliminada correctamente."
+      already_sent: "La nota de crédito ya fue informada a ARCA"
+      sent_success: "Nota de crédito exitosamente informada a ARCA."
+
+  # ── Items ─────────────────────────────────────────────────────
+  items:
+    index:
+      title: "Productos"
+      model: "producto"
+    new:
+      title: "Crear producto"
+    form:
+      errors: "No se pudo guardar el producto:"
+    flash:
+      created: "Producto creado exitosamente."
+      updated: "Producto actualizado exitosamente."
+      destroyed: "Producto eliminado correctamente."
+
+  # ── Sell Points ───────────────────────────────────────────────
+  sell_points:
+    index:
+      title: "Puntos de venta"
+      model: "punto de venta"
+    new:
+      title: "Crear punto de venta"
+    form:
+      errors: "No se pudo guardar el punto de venta:"
+    flash:
+      created: "Punto de venta creado exitosamente."
+      updated: "Punto de venta actualizado exitosamente."
+      destroyed: "Punto de venta eliminado correctamente."
+
+  # ── Client Groups ─────────────────────────────────────────────
+  client_groups:
+    index:
+      title: "Grupos de clientes"
+      model: "grupo de clientes"
+    new:
+      title: "Crear grupo de clientes"
+    form:
+      errors: "No se pudo guardar el grupo de clientes:"
+    flash:
+      created: "Grupo de clientes creado exitosamente."
+      updated: "Grupo de clientes actualizado exitosamente."
+      destroyed: "Grupo de clientes eliminado correctamente."
+
+  # ── Invoice Processes ──────────────────────────────────────────
+  invoice_processes:
+    index:
+      title: "Facturación"
+      bulk_by_product:
+        title: "Facturación masiva por producto"
+        description: "Crea una factura por cada cliente del grupo seleccionado con un mismo producto"
+
+  # ── Batch Invoice Processes ───────────────────────────────────
+  batch_invoice_processes:
+    index:
+      title: "Procesos de facturación"
+      model: "proceso"
+      all_clients: "Todos"
+    new:
+      title: "Facturación masiva por producto"
+    show:
+      title: "Detalle del proceso"
+      progress: "Progreso"
+      invoices: "Facturas creadas"
+    form:
+      select_client_group: "Seleccionar grupo de clientes"
+      select_item: "Seleccionar producto"
+      select_sell_point: "Seleccionar punto de venta"
+      confirm_all_clients_title: "Sin grupo de clientes"
+      confirm_all_clients: "No se seleccionó un grupo de clientes. Se creará una factura para todos los clientes activos."
+      confirm: "Confirmar"
+      cancel: "Cancelar"
+    flash:
+      created: "Proceso de facturación iniciado."
+      pdfs_generating: "Generando PDFs. Podrá descargarlos en unos momentos."
+      pdfs_not_ready: "Los PDFs aún no están listos."
+    status:
+      pending: "Pendiente"
+      processing: "Procesando"
+      completed: "Completado"
+      failed: "Error"
+
+  # ── IVAs ──────────────────────────────────────────────────────
+  ivas:
+    index:
+      title: "IVAS"
+      model: "IVA"
+    new:
+      title: "Crear IVA"
+    form:
+      errors: "No se pudo guardar el IVA:"
+    flash:
+      created: "IVA creado exitosamente."
+      updated: "IVA actualizado exitosamente."
+      destroyed: "IVA eliminado correctamente."
+
+  # ── Users / Profile ──────────────────────────────────────────
+  users:
+    form:
+      errors: "No se pudo guardar el perfil:"
+    show:
+      title: "Mi perfil"
+      query_last_invoice: "Consultar último comprobante"
+      sell_point: "Punto de Venta"
+      select_sell_point: "Seleccionar punto de venta"
+      invoice_type: "Tipo de comprobante"
+      select_type: "Seleccionar tipo"
+      invoice_a: "Factura A"
+      invoice_b: "Factura B"
+      invoice_c: "Factura C"
+      invoice_e: "Factura E"
+      query_button: "Consultar"
+    flash:
+      updated: "Usuario actualizado exitosamente."
+
+  # ── Services / AFIP ──────────────────────────────────────────
+  services:
+    afip:
+      malformed_response: "Respuesta AFIP malformada: %{xml}"
+      unknown_error: "Error desconocido en respuesta AFIP"
+
+  # ── JavaScript ────────────────────────────────────────────────
+  js:
+    last_invoice:
+      result: "Número del último comprobante: %{number}"
+      error: "Error al consultar AFIP."
+      connection_error: "Error de conexión."
