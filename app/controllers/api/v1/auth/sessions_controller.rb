@@ -14,7 +14,7 @@ module Api
         end
 
         def respond_to_on_destroy
-          if current_user
+          if request.headers['Authorization'].present?
             render json: { message: 'Sesión cerrada correctamente.' }, status: :ok
           else
             render json: { errors: ['No se encontró sesión activa.'] }, status: :unauthorized
