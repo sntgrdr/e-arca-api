@@ -14,7 +14,14 @@ module Api
         end
 
         def respond_to_on_destroy
-          if request.headers['Authorization'].present?
+          if request.cookies[JwtCookieMiddleware::COOKIE_NAME].present?
+            response.delete_cookie(
+              JwtCookieMiddleware::COOKIE_NAME,
+              path: '/',
+              secure: Rails.env.production?,
+              httponly: true,
+              same_site: :lax
+            )
             render json: { message: 'Sesión cerrada correctamente.' }, status: :ok
           else
             render json: { errors: ['No se encontró sesión activa.'] }, status: :unauthorized

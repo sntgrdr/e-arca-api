@@ -4,8 +4,9 @@ module AuthHelper
          params: { user: { email: user.email, password: 'securepassword12' } },
          as: :json
 
-    token = response.headers['Authorization']
-    { 'Authorization' => token }
+    # JWT is now in an HTTP-only cookie — pass it as a Cookie header
+    token = response.cookies[JwtCookieMiddleware::COOKIE_NAME]
+    { 'Cookie' => "#{JwtCookieMiddleware::COOKIE_NAME}=#{token}" }
   end
 end
 
