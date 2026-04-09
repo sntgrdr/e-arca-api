@@ -44,7 +44,7 @@ gem 'rubyzip', '~> 2.3'
 gem 'rails-i18n', '~> 8.0'
 
 # Audit trail
-gem 'paper_trail', '~> 16.0'
+gem 'paper_trail', '~> 17.0'
 
 group :development, :test do
   gem 'debug'
