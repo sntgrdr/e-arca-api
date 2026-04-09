@@ -1,6 +1,12 @@
 class BatchPdfGenerationJob < ApplicationJob
   queue_as :default
 
+  retry_on ActiveRecord::ConnectionTimeoutError,
+           wait: :polynomially_longer,
+           attempts: 5
+
+  discard_on ActiveRecord::RecordNotFound
+
   def perform(batch_invoice_process_id)
     batch = BatchInvoiceProcess.find(batch_invoice_process_id)
 
@@ -13,8 +19,8 @@ class BatchPdfGenerationJob < ApplicationJob
     )
 
     batch.update!(pdf_generated: true)
-  rescue => e
-    Rails.logger.error("BatchPdfGenerationJob failed: #{e.message}")
+  rescue StandardError => e
+    Rails.logger.error("[BatchPdfGenerationJob] batch_id=#{batch_invoice_process_id} #{e.class}: #{e.message}")
     raise
   end
 end

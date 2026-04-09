@@ -1,25 +1,28 @@
 module Api
   module V1
     class ClientInvoicesController < BaseController
-      before_action :set_invoice, only: %i[show update destroy send_to_arca download_pdf]
+      before_action :set_invoice, only: %i[show update destroy send_to_arca download_pdf history]
 
       def index
-        base_scope = ClientInvoice.all_my_invoices(current_user.id).order(created_at: :desc)
+        base_scope = policy_scope(ClientInvoice).order(created_at: :desc)
         filtered = ::Filters::ClientInvoicesFilterService.new(params, base_scope).call
         result = paginate(filtered)
         render json: result[:data], meta: result[:pagination], each_serializer: ClientInvoiceSerializer
       end
 
       def show
+        authorize @client_invoice
         render json: @client_invoice, serializer: ClientInvoiceSerializer
       end
 
       def next_number
+        authorize ClientInvoice
         render json: { number: ClientInvoice.current_number(current_user.id, params[:sell_point_id]) }
       end
 
       def create
         invoice = ClientInvoice.new(client_invoice_params.merge(user_id: current_user.id))
+        authorize invoice
 
         if invoice.save
           render json: invoice, serializer: ClientInvoiceSerializer, status: :created
@@ -29,6 +32,7 @@ module Api
       end
 
       def update
+        authorize @client_invoice
         if @client_invoice.update(client_invoice_params)
           render json: @client_invoice, serializer: ClientInvoiceSerializer
         else
@@ -37,16 +41,32 @@ module Api
       end
 
       def destroy
-        @client_invoice.destroy!
+        authorize @client_invoice
+
+        if @client_invoice.afip_authorized?
+          return render json: {
+            error: { code: "cannot_delete", message: "Cannot delete an AFIP-authorized invoice. Issue a credit note instead." }
+          }, status: :unprocessable_entity
+        end
+
+        @client_invoice.discard!
         head :no_content
       end
 
       def send_to_arca
-        if @client_invoice.cae.present?
-          return render json: { errors: ['La factura ya fue enviada a ARCA.'] }, status: :unprocessable_entity
+        authorize @client_invoice
+
+        if @client_invoice.authorized?
+          return render json: @client_invoice, serializer: ClientInvoiceSerializer
         end
 
-        result = "Invoices::#{Rails.env.camelize}::SendToArcaService".constantize.new(invoice: @client_invoice).call
+        unless @client_invoice.submittable?
+          return render json: {
+            error: { code: "conflict", message: "Invoice is currently being processed" }
+          }, status: :conflict
+        end
+
+        result = arca_service_module::SendToArcaService.new(invoice: @client_invoice).call
 
         if result[:success]
           render json: @client_invoice.reload, serializer: ClientInvoiceSerializer
@@ -55,7 +75,23 @@ module Api
         end
       end
 
+      def history
+        authorize @client_invoice
+        versions = @client_invoice.versions.order(created_at: :desc).map do |v|
+          {
+            id: v.id,
+            event: v.event,
+            who: v.whodunnit,
+            when: v.created_at,
+            changes: v.object_changes ? YAML.safe_load(v.object_changes, permitted_classes: [BigDecimal, Date, Time, ActiveSupport::TimeWithZone]) : {}
+          }
+        end
+        render json: { history: versions }
+      end
+
       def download_pdf
+        authorize @client_invoice
+
         if @client_invoice.cae.blank?
           return render json: { errors: ['La factura no tiene CAE. No se puede generar el PDF.'] }, status: :unprocessable_entity
         end

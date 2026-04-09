@@ -32,6 +32,7 @@ Rails.application.routes.draw do
         member do
           post :send_to_arca
           get :download_pdf
+          get :history
         end
       end
 
