@@ -9,7 +9,7 @@ module Api
         def respond_with(resource, _opts = {})
           if resource.persisted?
             render json: {
-              message: 'Cuenta creada correctamente.',
+              message: "Cuenta creada correctamente.",
               user: ActiveModelSerializers::SerializableResource.new(resource, serializer: UserSerializer)
             }, status: :created
           else

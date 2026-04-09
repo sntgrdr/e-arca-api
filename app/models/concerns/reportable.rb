@@ -14,15 +14,15 @@ module Reportable
   end
 
   def afip_code
-    code = '00'
-    if self.invoice_type == 'A' || self.invoice_type == 'EA'
-      code = '2'
-    elsif self.invoice_type == 'B' || self.invoice_type == 'EB'
-      code = '7'
-    elsif self.invoice_type == 'C' || self.invoice_type == 'EC'
-      code = '12'
-    elsif self.invoice_type == 'EE'
-      code = '19'
+    code = "00"
+    if self.invoice_type == "A" || self.invoice_type == "EA"
+      code = "2"
+    elsif self.invoice_type == "B" || self.invoice_type == "EB"
+      code = "7"
+    elsif self.invoice_type == "C" || self.invoice_type == "EC"
+      code = "12"
+    elsif self.invoice_type == "EE"
+      code = "19"
     end
     code
   end
@@ -44,51 +44,51 @@ module Reportable
   end
 
   def date_to_s
-    date.strftime('%Y%m%d')
+    date.strftime("%Y%m%d")
   end
 
   def invoice_total
-    format('%.2f', gross_total)
+    format("%.2f", gross_total)
   end
 
   def non_tax_total
-    '0.00'
+    "0.00"
   end
 
   def invoice_net_total
-    monotributista? ? format('%.2f', gross_total) : format('%.2f', net_amount)
+    monotributista? ? format("%.2f", gross_total) : format("%.2f", net_amount)
   end
 
   def invoice_exempt_total
-    format('%.2f', exempt_amount)
+    format("%.2f", exempt_amount)
   end
 
   def invoice_tribute_total
-    format('%.2f', tribute_amount)
+    format("%.2f", tribute_amount)
   end
 
   def invoice_iva_total
-    monotributista? ? '0.00' : format('%.2f', iva_amount)
+    monotributista? ? "0.00" : format("%.2f", iva_amount)
   end
 
   def service_date_from
-    service? ? service_range.first.strftime('%Y%m%d') : ''
+    service? ? service_range.first.strftime("%Y%m%d") : ""
   end
 
   def service_date_to
-    service? ? service_range.last.strftime('%Y%m%d') : ''
+    service? ? service_range.last.strftime("%Y%m%d") : ""
   end
 
   def invoice_due_date
-    (service? ? service_range.last : self[:date]).strftime('%Y%m%d')
+    (service? ? service_range.last : self[:date]).strftime("%Y%m%d")
   end
 
   def money
-    'PES'
+    "PES"
   end
 
   def money_value
-    '1.00'
+    "1.00"
   end
 
   def client_tax_condition
@@ -96,7 +96,7 @@ module Reportable
   end
 
   def iva_items
-    return [] if afip_code == '11'
+    return [] if afip_code == "11"
 
     lines
       .select { |l| l.iva.present? && l.iva.percentage.to_f.positive? }
@@ -108,8 +108,8 @@ module Reportable
 
         {
           iva_id: iva_code,
-          iva_base_imp: format('%.2f', base),
-          iva_importe:  format('%.2f', amount)
+          iva_base_imp: format("%.2f", base),
+          iva_importe:  format("%.2f", amount)
         }
       end
   end
@@ -133,7 +133,7 @@ module Reportable
   end
 
   def monotributista?
-    invoice_type == 'C'
+    invoice_type == "C"
   end
 
   def gross_total

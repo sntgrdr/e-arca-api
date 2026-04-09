@@ -11,7 +11,7 @@ module EArcaApi
 
     config.api_only = true
 
-    config.i18n.available_locales = [:es]
+    config.i18n.available_locales = [ :es ]
     config.i18n.default_locale = :es
 
     config.active_job.queue_adapter = :solid_queue
@@ -27,7 +27,7 @@ module EArcaApi
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
 
-    require_relative '../app/middleware/jwt_cookie_middleware'
+    require_relative "../app/middleware/jwt_cookie_middleware"
     config.middleware.use JwtCookieMiddleware
   end
 end

@@ -49,7 +49,7 @@ class Rack::Attack
         "Content-Type" => "application/json",
         "Retry-After" => retry_after
       },
-      [{ error: { code: "rate_limited", message: "Too many requests. Retry after #{retry_after}s" } }.to_json]
+      [ { error: { code: "rate_limited", message: "Too many requests. Retry after #{retry_after}s" } }.to_json ]
     ]
   end
 end

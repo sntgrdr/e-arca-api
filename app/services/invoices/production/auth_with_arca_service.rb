@@ -1,11 +1,11 @@
-require 'open3'
-require 'tempfile'
+require "open3"
+require "tempfile"
 
 module Invoices
   module Production
     class AuthWithArcaService
-      URL = 'https://wsaa.afip.gov.ar/ws/services/LoginCms'.freeze
-      CERTS_DIR = Rails.root.join('credentials/arca_certs')
+      URL = "https://wsaa.afip.gov.ar/ws/services/LoginCms".freeze
+      CERTS_DIR = Rails.root.join("credentials/arca_certs")
       LEGAL_NUMBER_FORMAT = /\A\d{2}-\d{8}-\d\z/
 
       def initialize(legal_number:)
@@ -49,32 +49,32 @@ module Invoices
       end
 
       def create_login_ticket
-        xml = Invoices::Production::GenerateLoginTicketService.generate('wsfe')
-        @xml_tempfile = Tempfile.new([ 'login_ticket_production', '.xml' ])
+        xml = Invoices::Production::GenerateLoginTicketService.generate("wsfe")
+        @xml_tempfile = Tempfile.new([ "login_ticket_production", ".xml" ])
         @xml_tempfile.write(xml)
         @xml_tempfile.close
       end
 
       def sign_ticket
-        cms_tempfile = Tempfile.new([ 'login_ticket_production', '.xml.cms' ])
+        cms_tempfile = Tempfile.new([ "login_ticket_production", ".xml.cms" ])
         cms_tempfile.close
 
         _stdout, stderr, status = Open3.capture3(
-          'openssl', 'cms',
-          '-sign',
-          '-in',      @xml_tempfile.path,
-          '-out',     cms_tempfile.path,
-          '-signer',  cert_path.to_s,
-          '-inkey',   key_path.to_s,
-          '-nodetach',
-          '-outform', 'PEM'
+          "openssl", "cms",
+          "-sign",
+          "-in",      @xml_tempfile.path,
+          "-out",     cms_tempfile.path,
+          "-signer",  cert_path.to_s,
+          "-inkey",   key_path.to_s,
+          "-nodetach",
+          "-outform", "PEM"
         )
 
         raise "Error al firmar ticket: #{stderr}" unless status.success?
 
         cms = File.read(cms_tempfile.path)
-        @clean_cms = cms.gsub('-----BEGIN CMS-----', '')
-                        .gsub('-----END CMS-----', '')
+        @clean_cms = cms.gsub("-----BEGIN CMS-----", "")
+                        .gsub("-----END CMS-----", "")
                         .strip
       ensure
         cms_tempfile&.unlink
@@ -91,8 +91,8 @@ module Invoices
         end
 
         response = conn.post do |req|
-          req.headers['Content-Type'] = 'text/xml;charset=UTF-8'
-          req.headers['SOAPAction']   = 'urn:loginCms'
+          req.headers["Content-Type"] = "text/xml;charset=UTF-8"
+          req.headers["SOAPAction"]   = "urn:loginCms"
           req.body = <<~XML
             <soapenv:Envelope xmlns:soapenv='http://schemas.xmlsoap.org/soap/envelope/'
                               xmlns:wsaa='http://wsaa.view.sua.dvadac.desein.afip.gov'>
@@ -109,15 +109,15 @@ module Invoices
         doc = Nokogiri::XML(response.body)
         doc.remove_namespaces!
 
-        ta_xml = doc.at_xpath('//loginCmsReturn')&.content
-        raise 'Respuesta WSAA inválida' if ta_xml.blank?
+        ta_xml = doc.at_xpath("//loginCmsReturn")&.content
+        raise "Respuesta WSAA inválida" if ta_xml.blank?
 
         ta_doc = Nokogiri::XML(ta_xml)
-        token      = ta_doc.at_xpath('//token')&.content
-        sign       = ta_doc.at_xpath('//sign')&.content
-        expires_at = ta_doc.at_xpath('//expirationTime')&.content
+        token      = ta_doc.at_xpath("//token")&.content
+        sign       = ta_doc.at_xpath("//sign")&.content
+        expires_at = ta_doc.at_xpath("//expirationTime")&.content
 
-        raise 'Token o Sign faltante en TA' if token.blank? || sign.blank?
+        raise "Token o Sign faltante en TA" if token.blank? || sign.blank?
 
         [ token, sign, expires_at ]
       end

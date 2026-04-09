@@ -44,7 +44,7 @@ module Api
       def autocomplete
         authorize Item
         items = Item.all_my_items(current_user.id).active
-                    .where('name ILIKE ? OR code ILIKE ?', "%#{params[:q]}%", "%#{params[:q]}%")
+                    .where("name ILIKE ? OR code ILIKE ?", "%#{params[:q]}%", "%#{params[:q]}%")
                     .limit(10)
 
         render json: items.map { |item|

@@ -10,7 +10,7 @@ class User < ApplicationRecord
   validates :legal_name, uniqueness: { case_sensitive: false }
   validates :legal_number,
             uniqueness: true,
-            unless: -> { legal_number == '11-11111111-1' }
+            unless: -> { legal_number == "11-11111111-1" }
 
   private
 
@@ -18,6 +18,6 @@ class User < ApplicationRecord
     return if password.match?(/[A-Z]/) && password.match?(/[\-._]/)
 
     errors.add(:password, :complexity,
-               message: I18n.t('errors.messages.password_complexity'))
+               message: I18n.t("errors.messages.password_complexity"))
   end
 end

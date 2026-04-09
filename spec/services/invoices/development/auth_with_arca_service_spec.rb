@@ -55,7 +55,7 @@ RSpec.describe Invoices::Development::AuthWithArcaService, type: :service do
 
     # Stub the openssl CMS signing command — success by default
     mock_status = instance_double(Process::Status, success?: true)
-    allow(Open3).to receive(:capture3).and_return(['', '', mock_status])
+    allow(Open3).to receive(:capture3).and_return([ '', '', mock_status ])
 
     # Stub reading the CMS output file — service passes a Pathname, so stub both string and Pathname forms
     cms_path_str = Rails.root.join('tmp', 'LoginTicketRequest.xml.cms').to_s
@@ -91,7 +91,7 @@ RSpec.describe Invoices::Development::AuthWithArcaService, type: :service do
 
       it 'returns [token, sign]' do
         result = service.call
-        expect(result).to eq([token, sign])
+        expect(result).to eq([ token, sign ])
       end
 
       it 'makes a POST request to the homologation WSAA endpoint' do
@@ -128,7 +128,7 @@ RSpec.describe Invoices::Development::AuthWithArcaService, type: :service do
 
       it 'returns the cached [token, sign] without calling WSAA' do
         result = service.call
-        expect(result).to eq([cached_token, cached_sign])
+        expect(result).to eq([ cached_token, cached_sign ])
       end
 
       it 'does not make any HTTP request to WSAA' do
@@ -171,7 +171,7 @@ RSpec.describe Invoices::Development::AuthWithArcaService, type: :service do
 
       it 'returns the new [token, sign]' do
         result = service.call
-        expect(result).to eq([token, sign])
+        expect(result).to eq([ token, sign ])
       end
     end
 
@@ -193,14 +193,14 @@ RSpec.describe Invoices::Development::AuthWithArcaService, type: :service do
 
       it 'treats the cache as invalid and fetches a new token' do
         result = service.call
-        expect(result).to eq([token, sign])
+        expect(result).to eq([ token, sign ])
       end
     end
 
     context 'when the openssl signing command fails' do
       before do
         failed_status = instance_double(Process::Status, success?: false)
-        allow(Open3).to receive(:capture3).and_return(['', 'no such file', failed_status])
+        allow(Open3).to receive(:capture3).and_return([ '', 'no such file', failed_status ])
       end
 
       it 'raises a RuntimeError' do

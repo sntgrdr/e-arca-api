@@ -4,14 +4,14 @@ class CreditNote < Invoice
   include Reportable
 
   belongs_to :client_invoice,
-           class_name: 'ClientInvoice',
+           class_name: "ClientInvoice",
            optional: false
 
   def afip_code
     case invoice_type
-    when 'A', 'EA' then '3'
-    when 'B', 'EB' then '8'
-    when 'C', 'EC' then '13'
+    when "A", "EA" then "3"
+    when "B", "EB" then "8"
+    when "C", "EC" then "13"
     end
   end
 
