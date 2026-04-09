@@ -99,9 +99,9 @@ RSpec.describe Invoices::Development::GetLastInvoiceService, type: :service do
   end
 
   describe 'ERB template binding' do
-    # This documents the known defect: missing method definitions break the ERB binding
-    it 'raises NameError because sell_point_number is not defined as a method' do
-      expect { service.call }.to raise_error(NameError, /sell_point_number/)
+    it 'exposes sell_point_number and afip_code to the ERB binding' do
+      expect(service.sell_point_number).to eq('1')
+      expect(service.afip_code).to eq('11')
     end
   end
 end

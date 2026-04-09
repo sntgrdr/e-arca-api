@@ -52,4 +52,5 @@ Rails.application.routes.draw do
   end
 
   get 'up' => 'rails/health#show', as: :rails_health_check
+  get 'api/v1/health', to: 'api/v1/health#show'
 end

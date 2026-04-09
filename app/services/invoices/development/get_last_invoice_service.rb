@@ -2,7 +2,7 @@ module Invoices
   module Development
     class GetLastInvoiceService
       URL = 'https://wswhomo.afip.gov.ar/wsfev1/service.asmx'
-      attr_reader :sell_point, :invoice_type, :legal_number
+      attr_reader :sell_point_number, :afip_code, :legal_number
 
       def initialize(sell_point_number:, afip_code:, legal_number:)
         @sell_point_number = sell_point_number
