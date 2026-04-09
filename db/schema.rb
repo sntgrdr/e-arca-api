@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_08_020746) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,19 +42,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_020746) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "jwt_denylists", force: :cascade do |t|
-    t.string "jti", null: false
-    t.datetime "exp", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["jti"], name: "index_jwt_denylists_on_jti"
-  end
-
   create_table "batch_invoice_processes", force: :cascade do |t|
     t.bigint "client_group_id"
     t.datetime "created_at", null: false
     t.date "date", null: false
+    t.jsonb "error_details", default: []
     t.text "error_message"
+    t.integer "failed_invoices", default: 0, null: false
     t.bigint "item_id", null: false
     t.boolean "pdf_generated", default: false, null: false
     t.date "period", null: false
@@ -151,6 +145,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_020746) do
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["user_id"], name: "index_ivas_on_user_id"
+  end
+
+  create_table "jwt_denylists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "exp", null: false
+    t.string "jti", null: false
+    t.datetime "updated_at", null: false
+    t.index ["jti"], name: "index_jwt_denylists_on_jti"
   end
 
   create_table "lines", force: :cascade do |t|
@@ -331,6 +333,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_020746) do
     t.index ["legal_name"], name: "index_users_on_legal_name", unique: true
     t.index ["legal_number"], name: "index_users_on_legal_number_unique_except_ones", unique: true, where: "((legal_number)::text <> '11-11111111-1'::text)"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+  end
+
+  create_table "versions", force: :cascade do |t|
+    t.datetime "created_at"
+    t.string "event", null: false
+    t.bigint "item_id", null: false
+    t.string "item_type", null: false
+    t.text "object"
+    t.text "object_changes"
+    t.string "whodunnit"
+    t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
