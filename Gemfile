@@ -14,7 +14,7 @@ gem "devise-jwt", "~> 0.13"
 gem "active_model_serializers", "~> 0.10"
 
 # CORS
-gem "rack-cors", "~> 2.0"
+gem "rack-cors", "~> 3.0"
 gem "rack-attack", "~> 6.7"
 gem "discard", "~> 1.3"
 
