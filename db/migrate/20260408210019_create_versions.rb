@@ -1,4 +1,6 @@
 class CreateVersions < ActiveRecord::Migration[8.1]
+  disable_ddl_transaction!
+
   def change
     create_table :versions do |t|
       t.string   :item_type, null: false
@@ -10,6 +12,6 @@ class CreateVersions < ActiveRecord::Migration[8.1]
       t.datetime :created_at
     end
 
-    add_index :versions, %i[item_type item_id]
+    add_index :versions, %i[item_type item_id], algorithm: :concurrently
   end
 end

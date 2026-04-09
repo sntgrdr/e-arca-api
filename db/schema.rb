@@ -96,6 +96,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
     t.string "afip_invoice_number"
     t.text "afip_response_xml"
     t.string "afip_result"
+    t.string "afip_status", default: "draft", null: false
     t.bigint "batch_invoice_process_id"
     t.string "cae"
     t.date "cae_expiration"
@@ -104,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
     t.datetime "created_at", null: false
     t.date "date", null: false
     t.text "details"
+    t.datetime "discarded_at"
     t.string "invoice_type", default: "C", null: false
     t.string "number", null: false
     t.date "period", null: false
@@ -112,9 +114,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
     t.string "type"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.index ["afip_status"], name: "index_invoices_on_afip_status"
     t.index ["batch_invoice_process_id"], name: "index_invoices_on_batch_invoice_process_id"
     t.index ["client_id"], name: "index_invoices_on_client_id"
     t.index ["client_invoice_id"], name: "index_invoices_on_client_invoice_id"
+    t.index ["discarded_at"], name: "index_invoices_on_discarded_at"
     t.index ["sell_point_id", "type", "number"], name: "idx_unique_sellpoint_type_number", unique: true
     t.index ["sell_point_id"], name: "index_invoices_on_sell_point_id"
     t.index ["user_id", "client_id"], name: "index_invoices_on_user_id_and_client_id"
@@ -319,20 +323,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
+    t.integer "failed_attempts", default: 0, null: false
     t.string "legal_name", default: "", null: false
     t.string "legal_number", default: "", null: false
+    t.datetime "locked_at"
     t.string "name", default: "", null: false
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.string "state", default: "", null: false
     t.integer "tax_condition", default: 0, null: false
+    t.string "unlock_token"
     t.datetime "updated_at", null: false
     t.string "zip_code", default: "", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["legal_name"], name: "index_users_on_legal_name", unique: true
     t.index ["legal_number"], name: "index_users_on_legal_number_unique_except_ones", unique: true, where: "((legal_number)::text <> '11-11111111-1'::text)"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
   create_table "versions", force: :cascade do |t|
