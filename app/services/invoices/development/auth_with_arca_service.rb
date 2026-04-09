@@ -45,7 +45,7 @@ module Invoices
         )
 
         unless status.success?
-          raise 'Error al firmar ticket: #{stderr}'
+          raise "Error al firmar ticket: #{stderr}"
         end
 
         cms = File.read(cms_path)
@@ -55,7 +55,7 @@ module Invoices
       end
 
       def send_to_arca
-        conn = Faraday.new(url: URL, ssl: { verify: false }) do |f|
+        conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
           f.adapter Faraday.default_adapter
         end
 
@@ -96,8 +96,9 @@ module Invoices
         return false unless File.exist?(TA_PATH)
 
         data = JSON.parse(File.read(TA_PATH))
-        Time.parse(data['expires_at']) > Time.now + 5.minutes
-      rescue
+        Time.zone.parse(data['expires_at']) > Time.zone.now + 5.minutes
+      rescue StandardError => e
+        Rails.logger.warn("[AuthWithArcaService] Failed to read cached TA: #{e.class}: #{e.message}")
         false
       end
 

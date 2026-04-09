@@ -4,16 +4,18 @@ module Api
       before_action :set_sell_point, only: %i[show update destroy]
 
       def index
-        sell_points = SellPoint.all_my_sell_points(current_user.id).active
+        sell_points = policy_scope(SellPoint).active
         render json: sell_points, each_serializer: SellPointSerializer
       end
 
       def show
+        authorize @sell_point
         render json: @sell_point, serializer: SellPointSerializer
       end
 
       def create
         sell_point = SellPoint.new(sell_point_params.merge(user_id: current_user.id))
+        authorize sell_point
 
         if sell_point.save
           render json: sell_point, serializer: SellPointSerializer, status: :created
@@ -23,6 +25,7 @@ module Api
       end
 
       def update
+        authorize @sell_point
         if @sell_point.update(sell_point_params)
           render json: @sell_point, serializer: SellPointSerializer
         else
@@ -31,6 +34,7 @@ module Api
       end
 
       def destroy
+        authorize @sell_point
         if @sell_point.destroy
           head :no_content
         else

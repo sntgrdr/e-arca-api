@@ -4,16 +4,18 @@ module Api
       before_action :set_iva, only: %i[show update destroy]
 
       def index
-        ivas = Iva.all_my_ivas(current_user.id).active
+        ivas = policy_scope(Iva).active
         render json: ivas, each_serializer: IvaSerializer
       end
 
       def show
+        authorize @iva
         render json: @iva, serializer: IvaSerializer
       end
 
       def create
         iva = Iva.new(iva_params.merge(user_id: current_user.id))
+        authorize iva
 
         if iva.save
           render json: iva, serializer: IvaSerializer, status: :created
@@ -23,6 +25,7 @@ module Api
       end
 
       def update
+        authorize @iva
         if @iva.update(iva_params)
           render json: @iva, serializer: IvaSerializer
         else
@@ -31,6 +34,7 @@ module Api
       end
 
       def destroy
+        authorize @iva
         @iva.destroy!
         head :no_content
       end

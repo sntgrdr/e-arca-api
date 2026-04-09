@@ -1,6 +1,9 @@
 module Api
   module V1
     class ProfilesController < BaseController
+      skip_after_action :verify_authorized
+      skip_after_action :verify_policy_scoped
+
       def show
         render json: current_user, serializer: UserSerializer
       end
@@ -25,8 +28,9 @@ module Api
         else
           render json: { error: result[:error] }, status: :unprocessable_entity
         end
-      rescue => e
-        render json: { error: e.message }, status: :unprocessable_entity
+      rescue StandardError => e
+        Rails.logger.error("[ProfilesController#last_invoice] #{e.class}: #{e.message}")
+        render json: { error: { code: "service_error", message: "Could not retrieve last invoice from AFIP" } }, status: :unprocessable_entity
       end
 
       private

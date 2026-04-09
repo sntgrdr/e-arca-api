@@ -4,15 +4,17 @@ module Api
       before_action :set_batch_process, only: %i[show generate_pdfs download_pdfs]
 
       def index
-        processes = BatchInvoiceProcess.all_my_processes(current_user.id).order(created_at: :desc)
+        processes = policy_scope(BatchInvoiceProcess).order(created_at: :desc)
         render json: processes, each_serializer: BatchInvoiceProcessSerializer
       end
 
       def show
+        authorize @batch_process
         render json: @batch_process, serializer: BatchInvoiceProcessSerializer
       end
 
       def last_invoice_date
+        authorize BatchInvoiceProcess
         last_invoice = ClientInvoice
           .where(user_id: current_user.id, sell_point_id: params[:sell_point_id])
           .where.not(cae: nil)
@@ -24,6 +26,7 @@ module Api
 
       def create
         batch = BatchInvoiceProcess.new(batch_process_params.merge(user_id: current_user.id))
+        authorize batch
 
         if batch.save
           BulkInvoiceCreationJob.perform_later(batch.id)
@@ -34,6 +37,7 @@ module Api
       end
 
       def generate_pdfs
+        authorize @batch_process
         unless @batch_process.completed?
           return render json: { errors: ['El proceso aún no ha finalizado.'] }, status: :unprocessable_entity
         end
@@ -43,6 +47,7 @@ module Api
       end
 
       def download_pdfs
+        authorize @batch_process
         unless @batch_process.pdf_generated? && @batch_process.pdf_zip.attached?
           return render json: { errors: ['Los PDFs aún no están disponibles.'] }, status: :unprocessable_entity
         end

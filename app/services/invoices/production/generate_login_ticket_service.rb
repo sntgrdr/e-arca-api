@@ -2,7 +2,7 @@ module Invoices
   module Production
     class GenerateLoginTicketService
       def self.generate(service)
-        now = Time.now.utc
+        now = Time.zone.now.utc
 
         <<~XML
           <loginTicketRequest version="1.0">

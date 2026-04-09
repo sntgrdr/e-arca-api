@@ -82,7 +82,9 @@ module Invoices
       end
 
       def send_to_arca
-        conn = Faraday.new(url: URL, ssl: { verify: true, ciphers: 'DEFAULT:@SECLEVEL=0' }) do |f|
+        # AFIP SSL: Using OpenSSL defaults (TLS 1.2+, modern ciphers).
+        # If AFIP handshake fails, try: ssl: { verify: true, ciphers: 'DEFAULT:@SECLEVEL=1' }
+        conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
           f.adapter :net_http
         end
 
@@ -121,7 +123,7 @@ module Invoices
       def cached_ta_valid?
         @user.arca_token.present? &&
           @user.arca_token_expires_at.present? &&
-          @user.arca_token_expires_at > Time.now + 5.minutes
+          @user.arca_token_expires_at > Time.zone.now + 5.minutes
       end
 
       def read_cached_ta
@@ -132,7 +134,7 @@ module Invoices
         @user.update!(
           arca_token: token,
           arca_sign: sign,
-          arca_token_expires_at: Time.parse(expires_at)
+          arca_token_expires_at: Time.zone.parse(expires_at)
         )
       end
     end
