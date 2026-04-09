@@ -1,4 +1,6 @@
 class ClientInvoice < Invoice
+  has_paper_trail
+
   include Reportable
 
   belongs_to :batch_invoice_process, optional: true
