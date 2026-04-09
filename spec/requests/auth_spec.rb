@@ -6,7 +6,7 @@ RSpec.describe 'Authentication', type: :request do
   describe 'POST /api/v1/auth/sign_in' do
     it 'returns JWT token in Authorization header' do
       post '/api/v1/auth/sign_in',
-           params: { user: { email: user.email, password: 'password123' } },
+           params: { user: { email: user.email, password: 'securepassword12' } },
            as: :json
 
       expect(response).to have_http_status(:ok)
@@ -29,8 +29,8 @@ RSpec.describe 'Authentication', type: :request do
            params: {
              user: {
                email: 'new@example.com',
-               password: 'password123',
-               password_confirmation: 'password123',
+               password: 'securepassword12',
+               password_confirmation: 'securepassword12',
                legal_name: 'New Company',
                legal_number: '20-12345678-9',
                tax_condition: 'registered'
