@@ -26,5 +26,8 @@ module EArcaApi
 
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
+
+    require_relative '../app/middleware/jwt_cookie_middleware'
+    config.middleware.use JwtCookieMiddleware
   end
 end
