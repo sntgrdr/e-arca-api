@@ -29,7 +29,9 @@ module Invoices
       end
 
       def send_request(xml)
-        conn = Faraday.new(url: URL, ssl: { verify: true, ciphers: 'DEFAULT:@SECLEVEL=0' }) do |f|
+        # AFIP SSL: Using OpenSSL defaults (TLS 1.2+, modern ciphers).
+        # If AFIP handshake fails, try: ssl: { verify: true, ciphers: 'DEFAULT:@SECLEVEL=1' }
+        conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
           f.adapter :net_http
         end
 

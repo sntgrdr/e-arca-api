@@ -11,11 +11,20 @@ module Invoices
       end
 
       def call
-        return @invoice if @invoice.cae.present?
+        return { success: true, invoice: @invoice } if @invoice.authorized?
+
+        @invoice.with_lock do
+          return { success: false, errors: "Invoice is being processed" } if @invoice.submitting?
+          return { success: true, invoice: @invoice } if @invoice.authorized?
+          @invoice.update!(afip_status: :submitting)
+        end
 
         xml = soap_xml
         result = send_to_arca(xml)
         process_afip_response(result[:body])
+      rescue StandardError => e
+        @invoice.reload.update!(afip_status: :rejected) if @invoice.submitting?
+        raise
       end
 
       private
@@ -29,7 +38,7 @@ module Invoices
       def send_to_arca(xml)
         conn = Faraday.new(
           url: URL,
-          ssl: { verify: false }
+          ssl: { verify: true }
         )
 
         response = conn.post do |req|
@@ -77,7 +86,8 @@ module Invoices
             cab.at_xpath('FchProceso').content,
             '%Y%m%d%H%M%S'
           ),
-          afip_response_xml: xml
+          afip_response_xml: xml,
+          afip_status: :authorized
         )
       end
 
@@ -94,7 +104,8 @@ module Invoices
       def persist_error!(xml, error_msg)
         invoice.update!(
           afip_result: 'R',
-          afip_response_xml: xml
+          afip_response_xml: xml,
+          afip_status: :rejected
         )
       end
     end

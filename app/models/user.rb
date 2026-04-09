@@ -1,6 +1,6 @@
 class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
-         :recoverable, :validatable,
+         :recoverable, :validatable, :lockable,
          :jwt_authenticatable, jwt_revocation_strategy: JwtDenylist
 
   enum :tax_condition, ::Constants::Arca::TAX_CONDITIONS.symbolize_keys

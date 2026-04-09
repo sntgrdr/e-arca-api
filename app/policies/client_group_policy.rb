@@ -1,0 +1,1 @@
+class ClientGroupPolicy < ApplicationPolicy; end

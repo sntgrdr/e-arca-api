@@ -4,20 +4,23 @@ module Api
       before_action :set_credit_note, only: %i[show update destroy send_to_arca]
 
       def index
-        credit_notes = CreditNote.where(user_id: current_user.id).order(date: :desc)
+        credit_notes = policy_scope(CreditNote).order(date: :desc)
         render json: credit_notes, each_serializer: CreditNoteSerializer
       end
 
       def show
+        authorize @credit_note
         render json: @credit_note, serializer: CreditNoteSerializer
       end
 
       def next_number
+        authorize CreditNote
         render json: { number: CreditNote.current_number(current_user.id, params[:sell_point_id]) }
       end
 
       def create
         credit_note = CreditNote.new(credit_note_params.merge(user_id: current_user.id))
+        authorize credit_note
 
         if credit_note.save
           render json: credit_note, serializer: CreditNoteSerializer, status: :created
@@ -27,6 +30,7 @@ module Api
       end
 
       def update
+        authorize @credit_note
         if @credit_note.update(credit_note_params)
           render json: @credit_note, serializer: CreditNoteSerializer
         else
@@ -35,16 +39,32 @@ module Api
       end
 
       def destroy
-        @credit_note.destroy!
+        authorize @credit_note
+
+        if @credit_note.afip_authorized?
+          return render json: {
+            error: { code: "cannot_delete", message: "Cannot delete an AFIP-authorized credit note." }
+          }, status: :unprocessable_entity
+        end
+
+        @credit_note.discard!
         head :no_content
       end
 
       def send_to_arca
-        if @credit_note.cae.present?
-          return render json: { errors: ['La nota de crédito ya fue enviada a ARCA.'] }, status: :unprocessable_entity
+        authorize @credit_note
+
+        if @credit_note.authorized?
+          return render json: @credit_note, serializer: CreditNoteSerializer
         end
 
-        result = "Invoices::#{Rails.env.camelize}::SendToArcaService".constantize.new(invoice: @credit_note).call
+        unless @credit_note.submittable?
+          return render json: {
+            error: { code: "conflict", message: "Credit note is currently being processed" }
+          }, status: :conflict
+        end
+
+        result = arca_service_module::SendToArcaService.new(invoice: @credit_note).call
 
         if result[:success]
           render json: @credit_note.reload, serializer: CreditNoteSerializer

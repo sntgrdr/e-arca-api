@@ -16,6 +16,14 @@ module EArcaApi
 
     config.active_job.queue_adapter = :solid_queue
 
+    config.action_dispatch.default_headers = {
+      "X-Frame-Options"           => "DENY",
+      "X-Content-Type-Options"    => "nosniff",
+      "Referrer-Policy"           => "strict-origin-when-cross-origin",
+      "Permissions-Policy"        => "camera=(), microphone=(), geolocation=()",
+      "Strict-Transport-Security" => "max-age=31536000; includeSubDomains"
+    }
+
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
   end
