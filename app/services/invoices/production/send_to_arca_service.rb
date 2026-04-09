@@ -41,6 +41,8 @@ module Invoices
         # AFIP SSL: Using OpenSSL defaults (TLS 1.2+, modern ciphers).
         # If AFIP handshake fails, try: ssl: { verify: true, ciphers: 'DEFAULT:@SECLEVEL=1' }
         conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
+          f.options.timeout      = 20
+          f.options.open_timeout = 5
           f.adapter :net_http
         end
 

@@ -36,10 +36,10 @@ module Invoices
       end
 
       def send_to_arca(xml)
-        conn = Faraday.new(
-          url: URL,
-          ssl: { verify: true }
-        )
+        conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
+          f.options.timeout      = 20
+          f.options.open_timeout = 5
+        end
 
         response = conn.post do |req|
           req.headers['Content-Type'] = 'text/xml; charset=utf-8'
