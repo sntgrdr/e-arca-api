@@ -64,7 +64,7 @@ module Api
       end
 
       def item_params
-        params.require(:item).permit(:code, :name, :price, :iva_id)
+        params.require(:item).permit(:code, :name, :price, :iva_id, :item_group_id)
       end
     end
   end

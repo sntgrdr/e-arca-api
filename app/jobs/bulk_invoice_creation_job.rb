@@ -59,7 +59,7 @@ class BulkInvoiceCreationJob < ApplicationJob
   private
 
   def create_invoice_for_client(batch, client)
-    number = ClientInvoice.current_number(batch.user_id, batch.sell_point_id)
+    number = ClientInvoice.current_number(batch.user_id, batch.sell_point_id, 'C')
     item = batch.item
     iva_percentage = item.iva&.percentage || 0
     gross_price = (item.price * (1 + (iva_percentage / 100.0))).round(4)

@@ -22,8 +22,9 @@ class Invoice < ApplicationRecord
   validates :number, numericality: { greater_than: 0 }
   validates :afip_status, presence: true
 
-  def self.current_number(user_id, sell_point_id)
-    (where(user_id: user_id, sell_point_id: sell_point_id).maximum(Arel.sql('CAST(number AS INTEGER)')).to_i + 1).to_s
+  def self.current_number(user_id, sell_point_id, invoice_type)
+    (where(user_id: user_id, sell_point_id: sell_point_id, invoice_type: invoice_type)
+      .maximum(Arel.sql('CAST(number AS INTEGER)')).to_i + 1).to_s
   end
 
   def self.all_my_invoices(user_id)

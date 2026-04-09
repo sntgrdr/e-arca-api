@@ -21,6 +21,7 @@ Rails.application.routes.draw do
       # Resources
       resources :clients
       resources :client_groups
+      resources :item_groups
       resources :items do
         collection { get :autocomplete }
       end
