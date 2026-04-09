@@ -26,21 +26,21 @@ module Filters
       value = stripped_param(:legal_name)
       return result if value.blank?
 
-      result.where('clients.legal_name ILIKE ?', "%#{sanitize(value)}%")
+      result.where("clients.legal_name ILIKE ?", "%#{sanitize(value)}%")
     end
 
     def filter_by_legal_number(result)
       value = stripped_param(:legal_number)
       return result if value.blank?
 
-      result.where('clients.legal_number ILIKE ?', "%#{sanitize(value)}%")
+      result.where("clients.legal_number ILIKE ?", "%#{sanitize(value)}%")
     end
 
     def filter_by_name(result)
       value = stripped_param(:name)
       return result if value.blank?
 
-      result.where('clients.name ILIKE ?', "%#{sanitize(value)}%")
+      result.where("clients.name ILIKE ?", "%#{sanitize(value)}%")
     end
 
     def filter_by_tax_condition(result)

@@ -2,7 +2,7 @@ class Client < ApplicationRecord
   has_paper_trail
 
   belongs_to :user
-  belongs_to :iva
+  belongs_to :iva, optional: true
   belongs_to :client_group, optional: true
 
   validates :legal_name, :legal_number, :tax_condition, presence: true

@@ -8,23 +8,25 @@ module Api
 
         def respond_with(resource, _opts = {})
           render json: {
-            message: 'Sesión iniciada correctamente.',
+            message: "Sesión iniciada correctamente.",
             user: ActiveModelSerializers::SerializableResource.new(resource, serializer: UserSerializer)
           }, status: :ok
         end
 
-        def respond_to_on_destroy
+        def respond_to_on_destroy(resource = nil)
           if request.cookies[JwtCookieMiddleware::COOKIE_NAME].present?
             response.delete_cookie(
               JwtCookieMiddleware::COOKIE_NAME,
-              path: '/',
-              secure: Rails.env.production?,
-              httponly: true,
-              same_site: :lax
+              {
+                path: "/",
+                secure: Rails.env.production?,
+                httponly: true,
+                same_site: :lax
+              }
             )
-            render json: { message: 'Sesión cerrada correctamente.' }, status: :ok
+            render json: { message: "Sesión cerrada correctamente." }, status: :ok
           else
-            render json: { errors: ['No se encontró sesión activa.'] }, status: :unauthorized
+            render json: { errors: [ "No se encontró sesión activa." ] }, status: :unauthorized
           end
         end
       end

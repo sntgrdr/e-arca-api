@@ -6,7 +6,7 @@ RSpec.describe 'Authentication', type: :request do
   describe 'POST /api/v1/auth/sign_in' do
     it 'sets JWT in HTTP-only cookie on success' do
       post '/api/v1/auth/sign_in',
-           params: { user: { email: user.email, password: 'securepassword12' } },
+           params: { user: { email: user.email, password: 'Secure.pass1' } },
            as: :json
 
       expect(response).to have_http_status(:ok)
@@ -29,8 +29,8 @@ RSpec.describe 'Authentication', type: :request do
            params: {
              user: {
                email: 'new@example.com',
-               password: 'securepassword12',
-               password_confirmation: 'securepassword12',
+               password: 'Secure.pass1',
+               password_confirmation: 'Secure.pass1',
                legal_name: 'New Company',
                legal_number: '20-12345678-9',
                tax_condition: 'registered'

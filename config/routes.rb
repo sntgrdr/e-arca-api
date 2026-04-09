@@ -1,26 +1,27 @@
 Rails.application.routes.draw do
   devise_for :users,
-             path: 'api/v1/auth',
+             path: "api/v1/auth",
              path_names: {
-               sign_in: 'sign_in',
-               sign_out: 'sign_out',
-               registration: 'sign_up'
+               sign_in: "sign_in",
+               sign_out: "sign_out",
+               registration: "sign_up"
              },
              controllers: {
-               sessions: 'api/v1/auth/sessions',
-               registrations: 'api/v1/auth/registrations'
+               sessions: "api/v1/auth/sessions",
+               registrations: "api/v1/auth/registrations"
              }
 
   namespace :api do
     namespace :v1 do
       # Profile
-      get 'profile', to: 'profiles#show'
-      patch 'profile', to: 'profiles#update'
-      get 'profile/last_invoice', to: 'profiles#last_invoice'
+      get "profile", to: "profiles#show"
+      patch "profile", to: "profiles#update"
+      get "profile/last_invoice", to: "profiles#last_invoice"
 
       # Resources
       resources :clients
       resources :client_groups
+      resources :item_groups
       resources :items do
         collection { get :autocomplete }
       end
@@ -41,7 +42,7 @@ Rails.application.routes.draw do
         member { post :send_to_arca }
       end
 
-      resources :batch_invoice_processes, only: [:index, :create, :show] do
+      resources :batch_invoice_processes, only: [ :index, :create, :show ] do
         collection { get :last_invoice_date }
         member do
           post :generate_pdfs
@@ -51,6 +52,6 @@ Rails.application.routes.draw do
     end
   end
 
-  get 'up' => 'rails/health#show', as: :rails_health_check
-  get 'api/v1/health', to: 'api/v1/health#show'
+  get "up" => "rails/health#show", as: :rails_health_check
+  get "api/v1/health", to: "api/v1/health#show"
 end

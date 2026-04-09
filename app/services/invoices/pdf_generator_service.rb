@@ -1,6 +1,6 @@
-require 'prawn'
-require 'prawn/table'
-require 'rqrcode'
+require "prawn"
+require "prawn/table"
+require "rqrcode"
 
 module Invoices
   class PdfGeneratorService
@@ -8,16 +8,16 @@ module Invoices
     FONT_SIZE_NORMAL = 10
     FONT_SIZE_LARGE = 14
     FONT_SIZE_LETTER = 28
-    COLOR_DARK = '4A4E69'
+    COLOR_DARK = "4A4E69"
 
     def initialize(invoice:)
       @invoice = invoice
     end
 
     def call
-      raise ArgumentError, 'La factura debe tener CAE para generar el PDF' unless @invoice.cae.present?
+      raise ArgumentError, "La factura debe tener CAE para generar el PDF" unless @invoice.cae.present?
 
-      pdf = Prawn::Document.new(page_size: 'A4', margin: 30)
+      pdf = Prawn::Document.new(page_size: "A4", margin: 30)
       render_header(pdf)
       render_client_section(pdf)
       render_lines_table(pdf)
@@ -75,7 +75,7 @@ module Invoices
     end
 
     def render_client_section(pdf)
-      pdf.text 'Datos del cliente', size: FONT_SIZE_NORMAL, style: :bold
+      pdf.text "Datos del cliente", size: FONT_SIZE_NORMAL, style: :bold
       pdf.move_down 4
       pdf.text @invoice.client.legal_name, size: FONT_SIZE_NORMAL
       pdf.text "CUIT: #{@invoice.client.legal_number}", size: FONT_SIZE_NORMAL
@@ -90,11 +90,11 @@ module Invoices
 
     def render_lines_table(pdf)
       header = [
-        { content: 'Cantidad', font_style: :bold },
-        { content: 'Descripción', font_style: :bold },
-        { content: 'Precio unitario', font_style: :bold },
-        { content: 'IVA %', font_style: :bold },
-        { content: 'Precio final', font_style: :bold }
+        { content: "Cantidad", font_style: :bold },
+        { content: "Descripción", font_style: :bold },
+        { content: "Precio unitario", font_style: :bold },
+        { content: "IVA %", font_style: :bold },
+        { content: "Precio final", font_style: :bold }
       ]
 
       rows = @invoice.lines.includes(:iva, item: :iva).map do |line|
@@ -103,20 +103,20 @@ module Invoices
           format_number(line.quantity),
           line.description,
           format_currency(line.unit_price),
-          iva_percentage.present? ? "#{iva_percentage}%" : '-',
+          iva_percentage.present? ? "#{iva_percentage}%" : "-",
           format_currency(line.final_price)
         ]
       end
 
       pdf.table([ header ] + rows, width: pdf.bounds.width) do |t|
         t.row(0).background_color = COLOR_DARK
-        t.row(0).text_color = 'FFFFFF'
+        t.row(0).text_color = "FFFFFF"
         t.cells.size = FONT_SIZE_SMALL
         t.cells.padding = [ 6, 8 ]
         t.columns(0).align = :center
         t.columns(2..4).align = :right
         t.cells.borders = [ :bottom ]
-        t.cells.border_color = 'CCCCCC'
+        t.cells.border_color = "CCCCCC"
         t.row(0).borders = [ :bottom ]
         t.row(0).border_color = COLOR_DARK
       end
@@ -135,27 +135,27 @@ module Invoices
 
       pdf.image StringIO.new(png.to_s), width: 120, position: :left
       pdf.move_down 4
-      pdf.text 'Comprobante autorizado por ARCA', size: FONT_SIZE_SMALL, color: '666666'
+      pdf.text "Comprobante autorizado por ARCA", size: FONT_SIZE_SMALL, color: "666666"
     end
 
     def build_afip_qr_url
       data = {
         ver: 1,
         fecha: @invoice.date.iso8601,
-        cuit: @invoice.user.legal_number.gsub('-', '').to_i,
+        cuit: @invoice.user.legal_number.gsub("-", "").to_i,
         ptoVta: @invoice.sell_point.number.to_i,
         tipoCmp: @invoice.afip_code.to_i,
         nroCmp: @invoice.number.to_i,
         importe: @invoice.total_price.to_f,
-        moneda: 'PES',
+        moneda: "PES",
         ctz: 1,
-        tipoCodAut: 'E',
+        tipoCodAut: "E",
         codAut: @invoice.cae.to_i
       }
 
-      unless @invoice.invoice_type == 'C'
+      unless @invoice.invoice_type == "C"
         data[:tipoDocRec] = 80
-        data[:nroDocRec] = @invoice.client.legal_number.gsub('-', '').to_i
+        data[:nroDocRec] = @invoice.client.legal_number.gsub("-", "").to_i
       end
 
       encoded = Base64.strict_encode64(data.to_json)
@@ -163,13 +163,13 @@ module Invoices
     end
 
     def format_currency(amount)
-      return '$0,00' unless amount
+      return "$0,00" unless amount
       "$#{format('%.2f', amount).gsub('.', ',')}"
     end
 
     def format_number(num)
-      return '0' unless num
-      num.to_i == num ? num.to_i.to_s : format('%.2f', num)
+      return "0" unless num
+      num.to_i == num ? num.to_i.to_s : format("%.2f", num)
     end
   end
 end

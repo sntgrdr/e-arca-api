@@ -1,7 +1,7 @@
 module Invoices
   module Production
     class GetLastInvoiceService
-      URL = 'https://servicios1.afip.gov.ar/wsfev1/service.asmx'.freeze
+      URL = "https://servicios1.afip.gov.ar/wsfev1/service.asmx".freeze
 
       def initialize(sell_point_number:, afip_code:, legal_number:)
         @sell_point_number = sell_point_number
@@ -38,8 +38,8 @@ module Invoices
         end
 
         conn.post do |req|
-          req.headers['Content-Type'] = 'text/xml; charset=utf-8'
-          req.headers['SOAPAction']   = 'http://ar.gov.afip.dif.FEV1/FECompUltimoAutorizado'
+          req.headers["Content-Type"] = "text/xml; charset=utf-8"
+          req.headers["SOAPAction"]   = "http://ar.gov.afip.dif.FEV1/FECompUltimoAutorizado"
           req.body = xml
         end
       end
@@ -48,11 +48,11 @@ module Invoices
         doc = Nokogiri::XML(body)
         doc.remove_namespaces!
 
-        if (err = doc.at_xpath('//Errors/Err'))
-          raise err.at_xpath('Msg')&.content || 'Error desconocido en respuesta AFIP'
+        if (err = doc.at_xpath("//Errors/Err"))
+          raise err.at_xpath("Msg")&.content || "Error desconocido en respuesta AFIP"
         end
 
-        doc.at_xpath('//CbteNro')&.content&.to_i
+        doc.at_xpath("//CbteNro")&.content&.to_i
       end
     end
   end

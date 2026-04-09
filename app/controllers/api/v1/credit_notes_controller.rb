@@ -15,7 +15,7 @@ module Api
 
       def next_number
         authorize CreditNote
-        render json: { number: CreditNote.current_number(current_user.id, params[:sell_point_id]) }
+        render json: { number: CreditNote.current_number(current_user.id, params[:sell_point_id], params[:invoice_type]) }
       end
 
       def create

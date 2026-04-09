@@ -1,6 +1,7 @@
 class Item < ApplicationRecord
   belongs_to :iva
   belongs_to :user
+  belongs_to :item_group, optional: true
 
   validates :name, :code, :price, presence: true
   validates :price, numericality: { greater_than: 0 }

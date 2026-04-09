@@ -14,9 +14,9 @@ class BulkInvoiceCreationJob < ApplicationJob
 
     clients = if batch.client_group_id.present?
                 batch.client_group.clients.where(active: true)
-              else
+    else
                 Client.all_my_clients(batch.user_id)
-              end
+    end
 
     batch.update!(total_invoices: clients.count)
 
@@ -32,11 +32,11 @@ class BulkInvoiceCreationJob < ApplicationJob
         )
         batch.increment!(:failed_invoices)
         batch.update!(
-          error_details: batch.error_details + [{
+          error_details: batch.error_details + [ {
             client_id: client.id,
             client_name: client.legal_name,
             error: "#{e.class}: #{e.message}"
-          }]
+          } ]
         )
       end
     end
@@ -59,7 +59,7 @@ class BulkInvoiceCreationJob < ApplicationJob
   private
 
   def create_invoice_for_client(batch, client)
-    number = ClientInvoice.current_number(batch.user_id, batch.sell_point_id)
+    number = ClientInvoice.current_number(batch.user_id, batch.sell_point_id, "C")
     item = batch.item
     iva_percentage = item.iva&.percentage || 0
     gross_price = (item.price * (1 + (iva_percentage / 100.0))).round(4)
@@ -68,7 +68,7 @@ class BulkInvoiceCreationJob < ApplicationJob
       number: number,
       date: batch.date,
       period: batch.period,
-      invoice_type: 'C',
+      invoice_type: "C",
       sell_point_id: batch.sell_point_id,
       user_id: batch.user_id,
       client_id: client.id,

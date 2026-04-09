@@ -11,10 +11,10 @@ class BatchInvoiceProcess < ApplicationRecord
   validates :date, :period, :status, presence: true
 
   enum :status, {
-    pending: 'pending',
-    processing: 'processing',
-    completed: 'completed',
-    failed: 'failed'
+    pending: "pending",
+    processing: "processing",
+    completed: "completed",
+    failed: "failed"
   }
 
   scope :all_my_processes, ->(user_id) { where(user_id: user_id) }
