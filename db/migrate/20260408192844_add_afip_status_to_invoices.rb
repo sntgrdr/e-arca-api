@@ -1,7 +1,9 @@
 class AddAfipStatusToInvoices < ActiveRecord::Migration[8.1]
+  disable_ddl_transaction!
+
   def up
     add_column :invoices, :afip_status, :string, default: "draft", null: false
-    add_index :invoices, :afip_status
+    add_index :invoices, :afip_status, algorithm: :concurrently
 
     # Backfill existing records
     execute <<-SQL
