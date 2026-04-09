@@ -65,7 +65,7 @@ RSpec.describe 'Api::V1::ClientInvoices', type: :request do
 
     it 'returns error when no CAE' do
       get "/api/v1/client_invoices/#{invoice.id}/download_pdf", headers: headers, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 end

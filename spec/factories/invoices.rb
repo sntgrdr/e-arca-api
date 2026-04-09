@@ -15,6 +15,7 @@ FactoryBot.define do
       afip_invoice_number { '1' }
       afip_result { 'A' }
       afip_authorized_at { Time.current }
+      afip_status { :authorized }
     end
 
     trait :with_lines do

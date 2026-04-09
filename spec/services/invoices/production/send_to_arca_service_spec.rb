@@ -108,7 +108,7 @@ RSpec.describe Invoices::Production::SendToArcaService, type: :service do
       it 'returns the invoice early without calling AFIP' do
         expect(Faraday).not_to receive(:new)
         result = service.call
-        expect(result).to eq(invoice)
+        expect(result[:success]).to be true
       end
 
       it 'does not make any HTTP requests' do

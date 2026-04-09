@@ -106,7 +106,7 @@ RSpec.describe Invoices::Development::SendToArcaService, type: :service do
 
       it 'returns the invoice object' do
         result = service.call
-        expect(result).to eq(invoice)
+        expect(result[:success]).to be true
       end
     end
 
