@@ -82,13 +82,12 @@ def set_batch_process
 end
 ```
 
-**`show`** — single query combining ownership scope + `includes`, sets `Cache-Control: no-store`:
+**`show`** — single ownership-scoped query, sets `Cache-Control: no-store`. The serializer owns the capped invoice loading:
 
 ```ruby
 def show
   batch = BatchInvoiceProcess
     .where(user_id: current_user.id)
-    .includes(client_invoices: :client)
     .find(params[:id])
   authorize batch
   response.set_header('Cache-Control', 'no-store')
@@ -116,7 +115,7 @@ end
 ```
 Frontend (polling GET /api/v1/batch_invoice_processes/:id every ~4s)
   → BatchInvoiceProcessesController#show
-  → single query: .where(user_id: current_user.id).includes(client_invoices: :client).find(id)
+  → single query: .where(user_id: current_user.id).find(id)
   → authorize
   → Cache-Control: no-store header
   → BatchInvoiceProcessDetailSerializer
