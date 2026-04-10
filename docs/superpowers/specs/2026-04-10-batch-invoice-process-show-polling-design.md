@@ -45,11 +45,16 @@ Used by `show` only. Adds a `client_invoices` array using a dedicated slim seria
 Attributes returned by `BatchInvoiceProcessDetailSerializer`:
 ```
 id, status, date, period, total_invoices, processed_invoices, failed_invoices,
-pdf_generated, error_message, client_group_id, item_id, sell_point_id, created_at,
-client_invoices
+pdf_generated, error_message, client_group_id, item_id, sell_point_id,
+created_at, updated_at, client_invoices, client_invoices_capped,
+client_invoices_total
 ```
 
 `error_details` is included only when `status == "failed"` — it can be verbose and is irrelevant during normal completion.
+
+`updated_at` is included to allow the frontend to implement a polling circuit breaker: if `updated_at` hasn't changed in X minutes while status is still `processing`, the frontend can stop polling and show a stale warning.
+
+`client_invoices_capped` (boolean) and `client_invoices_total` (integer) are always present so the frontend can display "Showing first 200 of N" when the cap is hit, rather than silently showing incomplete data.
 
 **`BatchClientInvoiceSerializer`** (new)
 Slim invoice shape used only inside the batch show response. Does not reuse `ClientInvoiceSerializer` (which is too heavy — includes lines, credit notes, etc.).
@@ -67,22 +72,25 @@ Hard cap: `client_invoices` is limited to 200 records ordered by `created_at ASC
 
 ### Controller
 
-**`set_batch_process`** — unchanged. No `includes` here — actions like `generate_pdfs` and `download_pdfs` don't need invoices and shouldn't pay for the eager load.
+**`set_batch_process`** — scoped to `generate_pdfs` and `download_pdfs` only. `show` does its own single-query load that combines ownership check + eager loading.
 
 ```ruby
+before_action :set_batch_process, only: %i[generate_pdfs download_pdfs]
+
 def set_batch_process
   @batch_process = BatchInvoiceProcess.where(user_id: current_user.id).find(params[:id])
 end
 ```
 
-**`show`** — loads invoices independently, switches to detail serializer, sets `Cache-Control: no-store`:
+**`show`** — single query combining ownership scope + `includes`, sets `Cache-Control: no-store`:
 
 ```ruby
 def show
-  authorize @batch_process
   batch = BatchInvoiceProcess
+    .where(user_id: current_user.id)
     .includes(client_invoices: :client)
-    .find(@batch_process.id)
+    .find(params[:id])
+  authorize batch
   response.set_header('Cache-Control', 'no-store')
   render json: batch, serializer: BatchInvoiceProcessDetailSerializer
 end
@@ -108,16 +116,18 @@ end
 ```
 Frontend (polling GET /api/v1/batch_invoice_processes/:id every ~4s)
   → BatchInvoiceProcessesController#show
-  → set_batch_process: loads batch scoped to current_user (no includes)
+  → single query: .where(user_id: current_user.id).includes(client_invoices: :client).find(id)
   → authorize
-  → second load with includes(client_invoices: :client), capped at 200
   → Cache-Control: no-store header
   → BatchInvoiceProcessDetailSerializer
-      → scalar batch fields
+      → scalar batch fields + updated_at
       → error_details only if status == "failed"
       → client_invoices: [BatchClientInvoiceSerializer, ...] (max 200)
+      → client_invoices_capped: true/false
+      → client_invoices_total: N
   → JSON response
 Frontend stops polling when status == "completed" || "failed"
+Frontend circuit breaker: stop polling if updated_at unchanged for X minutes while processing
 ```
 
 ---
@@ -136,8 +146,11 @@ No new error cases introduced. The existing `set_batch_process` already raises `
 - Returns `client_invoices` nested in the response with slim fields: `id`, `number`, `client_name`, `client_legal_number`, `cae`, `afip_authorized_at`, `total_price`
 - Returns `error_details` when `status == "failed"`
 - Does NOT return `error_details` when `status == "completed"`
+- Returns `updated_at` in the response
 - Response includes `Cache-Control: no-store` header
 - Returns at most 200 invoices when batch has more than 200
+- Returns `client_invoices_capped: true` and correct `client_invoices_total` when cap is hit
+- Returns `client_invoices_capped: false` and correct `client_invoices_total` when under cap
 
 `index`:
 - Returns `item` and `sell_point` nested in each result
