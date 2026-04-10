@@ -121,21 +121,22 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
       end
     end
 
-    context 'tenant isolation' do
-      it_behaves_like 'a user-scoped resource' do
-        let(:resource_path) { '/api/v1/batch_invoice_processes' }
-        let(:resource) do
-          iva_a   = create(:iva, user: user_a)
-          item_a  = create(:item, user: user_a, iva: iva_a)
-          sp_a    = create(:sell_point, user: user_a)
-          create(:batch_invoice_process, user: user_a, item: item_a, sell_point: sp_a)
-        end
-        let(:resource_list) do
-          iva_a   = create(:iva, user: user_a)
-          item_a  = create(:item, user: user_a, iva: iva_a)
-          sp_a    = create(:sell_point, user: user_a)
-          create_list(:batch_invoice_process, 2, user: user_a, item: item_a, sell_point: sp_a)
-        end
+  end
+
+  context 'tenant isolation' do
+    it_behaves_like 'a user-scoped resource' do
+      let(:resource_path) { '/api/v1/batch_invoice_processes' }
+      let(:resource) do
+        iva_a   = create(:iva, user: user_a)
+        item_a  = create(:item, user: user_a, iva: iva_a)
+        sp_a    = create(:sell_point, user: user_a)
+        create(:batch_invoice_process, user: user_a, item: item_a, sell_point: sp_a)
+      end
+      let(:resource_list) do
+        iva_a   = create(:iva, user: user_a)
+        item_a  = create(:item, user: user_a, iva: iva_a)
+        sp_a    = create(:sell_point, user: user_a)
+        create_list(:batch_invoice_process, 2, user: user_a, item: item_a, sell_point: sp_a)
       end
     end
   end
