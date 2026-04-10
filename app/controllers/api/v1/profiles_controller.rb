@@ -17,14 +17,17 @@ module Api
       end
 
       def last_invoice
-        result = Invoices::Production::LastInvoiceQueryService.new(
+        result = arca_service_module::LastInvoiceQueryService.new(
           sell_point_number: params[:sell_point_number],
           afip_code:         params[:afip_code],
           user:              current_user
         ).call
 
         if result[:success]
-          render json: { last_number: result[:last_number] }
+          render json: {
+            last_number: result[:last_number],
+            afip_authorized_at: result[:afip_authorized_at]
+          }
         else
           render json: { error: result[:error] }, status: :unprocessable_entity
         end
@@ -37,7 +40,7 @@ module Api
 
       def user_params
         params.require(:user).permit(
-          :name, :email, :legal_name, :legal_number, :tax_condition,
+          :name, :email, :legal_name, :legal_number, :dni, :tax_condition,
           :alias_account, :account_number, :address, :zip_code,
           :city, :state, :country, :cai, :activity_start, :active,
           :password, :password_confirmation

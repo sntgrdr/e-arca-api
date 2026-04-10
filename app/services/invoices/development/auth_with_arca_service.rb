@@ -55,7 +55,7 @@ module Invoices
       end
 
       def send_to_arca
-        conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
+        conn = Faraday.new(url: URL) do |f|
           f.options.timeout      = 20
           f.options.open_timeout = 5
           f.adapter Faraday.default_adapter

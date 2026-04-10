@@ -13,8 +13,11 @@ module Invoices
         token, sign = Invoices::Production::AuthWithArcaService.new(
           legal_number: @legal_number
         ).call
+
         xml = build_xml(token, sign)
+
         response = send_request(xml)
+
         parse_response(response.body)
       end
 
@@ -29,9 +32,7 @@ module Invoices
       end
 
       def send_request(xml)
-        # AFIP SSL: Using OpenSSL defaults (TLS 1.2+, modern ciphers).
-        # If AFIP handshake fails, try: ssl: { verify: true, ciphers: 'DEFAULT:@SECLEVEL=1' }
-        conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
+        conn = Faraday.new(url: URL) do |f|
           f.options.timeout      = 20
           f.options.open_timeout = 5
           f.adapter :net_http

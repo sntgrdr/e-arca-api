@@ -6,11 +6,9 @@ module Invoices
     class AuthWithArcaService
       URL = "https://wsaa.afip.gov.ar/ws/services/LoginCms".freeze
       CERTS_DIR = Rails.root.join("credentials/arca_certs")
-      LEGAL_NUMBER_FORMAT = /\A\d{2}-\d{8}-\d\z/
 
       def initialize(legal_number:)
         @legal_number = legal_number
-        validate_legal_number!
       end
 
       def call
@@ -28,12 +26,6 @@ module Invoices
 
       private
 
-      def validate_legal_number!
-        return if @legal_number.match?(LEGAL_NUMBER_FORMAT)
-
-        raise ArgumentError, "Invalid legal_number format: #{@legal_number}. Expected format: XX-XXXXXXXX-X"
-      end
-
       def cert_path
         path = CERTS_DIR.join("#{@legal_number}-certificate.crt")
         raise "Certificate not found for #{@legal_number} at #{path}" unless File.exist?(path)
@@ -42,7 +34,7 @@ module Invoices
       end
 
       def key_path
-        path = CERTS_DIR.join("#{@legal_number}-private_key.pem")
+        path = CERTS_DIR.join("#{@legal_number}-private_key")
         raise "Private key not found for #{@legal_number} at #{path}" unless File.exist?(path)
 
         path
@@ -82,9 +74,7 @@ module Invoices
       end
 
       def send_to_arca
-        # AFIP SSL: Using OpenSSL defaults (TLS 1.2+, modern ciphers).
-        # If AFIP handshake fails, try: ssl: { verify: true, ciphers: 'DEFAULT:@SECLEVEL=1' }
-        conn = Faraday.new(url: URL, ssl: { verify: true }) do |f|
+        conn = Faraday.new(url: URL) do |f|
           f.options.timeout      = 20
           f.options.open_timeout = 5
           f.adapter :net_http
