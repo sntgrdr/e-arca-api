@@ -1,7 +1,7 @@
 module Api
   module V1
     class BatchInvoiceProcessesController < BaseController
-      before_action :set_batch_process, only: %i[show generate_pdfs download_pdfs]
+      before_action :set_batch_process, only: %i[generate_pdfs download_pdfs]
 
       def index
         processes = policy_scope(BatchInvoiceProcess)
@@ -11,8 +11,12 @@ module Api
       end
 
       def show
-        authorize @batch_process
-        render json: @batch_process, serializer: BatchInvoiceProcessSerializer
+        batch = BatchInvoiceProcess
+          .where(user_id: current_user.id)
+          .find(params[:id])
+        authorize batch
+        response.set_header('Cache-Control', 'no-store')
+        render json: batch, serializer: BatchInvoiceProcessDetailSerializer
       end
 
       def last_invoice_date
