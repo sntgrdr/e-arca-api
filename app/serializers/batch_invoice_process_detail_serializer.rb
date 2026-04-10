@@ -8,15 +8,20 @@ class BatchInvoiceProcessDetailSerializer < ActiveModel::Serializer
              :client_invoices, :client_invoices_capped, :client_invoices_total
 
   def client_invoices
-    object.client_invoices
-          .includes(:client)
-          .order(created_at: :asc)
-          .limit(INVOICE_CAP)
-          .map { |inv| BatchClientInvoiceSerializer.new(inv).attributes }
+    @client_invoices ||= object.client_invoices
+                               .includes(:client)
+                               .order(created_at: :asc)
+                               .limit(INVOICE_CAP)
+                               .map { |inv| BatchClientInvoiceSerializer.new(inv).attributes }
   end
 
   def client_invoices_total
-    @client_invoices_total ||= object.client_invoices.count
+    @client_invoices_total ||=
+      if client_invoices.size < INVOICE_CAP
+        client_invoices.size
+      else
+        object.client_invoices.count
+      end
   end
 
   def client_invoices_capped
