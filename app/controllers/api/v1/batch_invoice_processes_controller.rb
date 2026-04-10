@@ -4,7 +4,9 @@ module Api
       before_action :set_batch_process, only: %i[show generate_pdfs download_pdfs]
 
       def index
-        processes = policy_scope(BatchInvoiceProcess).order(created_at: :desc)
+        processes = policy_scope(BatchInvoiceProcess)
+          .includes(:item, :sell_point)
+          .order(created_at: :desc)
         render json: processes, each_serializer: BatchInvoiceProcessSerializer
       end
 
