@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_09_201036) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -127,15 +127,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
     t.index ["user_id"], name: "index_invoices_on_user_id"
   end
 
+  create_table "item_groups", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id", "name"], name: "index_item_groups_on_user_id_and_name", unique: true
+    t.index ["user_id"], name: "index_item_groups_on_user_id"
+  end
+
   create_table "items", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.string "code"
     t.datetime "created_at", null: false
+    t.bigint "item_group_id"
     t.bigint "iva_id"
     t.string "name"
     t.decimal "price", precision: 15, scale: 4
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.index ["item_group_id"], name: "index_items_on_item_group_id"
     t.index ["iva_id"], name: "index_items_on_iva_id"
     t.index ["user_id", "active"], name: "index_items_on_user_id_and_active"
     t.index ["user_id"], name: "index_items_on_user_id"
@@ -369,6 +381,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_210048) do
   add_foreign_key "invoices", "invoices", column: "client_invoice_id"
   add_foreign_key "invoices", "sell_points"
   add_foreign_key "invoices", "users"
+  add_foreign_key "item_groups", "users"
+  add_foreign_key "items", "item_groups"
   add_foreign_key "ivas", "users"
   add_foreign_key "sell_points", "users"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

@@ -14,7 +14,7 @@ RSpec.describe Invoices::Development::SendToArcaService, type: :service do
   before do
     allow(Invoices::Development::AuthWithArcaService)
       .to receive_message_chain(:new, :call)
-      .and_return([token, sign])
+      .and_return([ token, sign ])
   end
 
   subject(:service) { described_class.new(invoice: invoice) }

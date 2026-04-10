@@ -87,7 +87,7 @@ RSpec.describe Filters::ItemsFilterService, type: :service do
     let!(:item_10)  { create(:item, user: user, iva: iva_10) }
 
     context 'with a single iva_id' do
-      let(:params) { { iva_id: [iva_21.id] } }
+      let(:params) { { iva_id: [ iva_21.id ] } }
 
       it 'returns only items with the matching IVA' do
         expect(filter).to include(item_21)
@@ -96,7 +96,7 @@ RSpec.describe Filters::ItemsFilterService, type: :service do
     end
 
     context 'with multiple iva_ids' do
-      let(:params) { { iva_id: [iva_21.id, iva_10.id] } }
+      let(:params) { { iva_id: [ iva_21.id, iva_10.id ] } }
 
       it 'returns items with any of the matching IVAs' do
         expect(filter).to include(item_21, item_10)
@@ -162,7 +162,7 @@ RSpec.describe Filters::ItemsFilterService, type: :service do
       {
         code: 'SRV',
         name: 'servicio',
-        iva_id: [iva_zero.id],
+        iva_id: [ iva_zero.id ],
         price_from: '2000',
         price_to: '5000'
       }

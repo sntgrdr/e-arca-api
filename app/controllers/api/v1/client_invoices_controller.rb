@@ -17,11 +17,12 @@ module Api
 
       def next_number
         authorize ClientInvoice
-        render json: { number: ClientInvoice.current_number(current_user.id, params[:sell_point_id]) }
+        render json: { number: ClientInvoice.current_number(current_user.id, params[:sell_point_id], params[:invoice_type]) }
       end
 
       def create
         invoice = ClientInvoice.new(client_invoice_params.merge(user_id: current_user.id))
+        invoice.lines.each { |line| line.user_id = current_user.id }
         authorize invoice
 
         if invoice.save
@@ -33,8 +34,18 @@ module Api
 
       def update
         authorize @client_invoice
-        if @client_invoice.update(client_invoice_params)
-          render json: @client_invoice, serializer: ClientInvoiceSerializer
+
+        if @client_invoice.afip_authorized?
+          return render json: {
+            error: { code: "cannot_edit", message: I18n.t("client_invoices.errors.cannot_edit_authorized") }
+          }, status: :unprocessable_entity
+        end
+
+        @client_invoice.assign_attributes(client_invoice_params)
+        @client_invoice.lines.each { |line| line.user_id = current_user.id if line.user_id.blank? }
+
+        if @client_invoice.save
+          render json: @client_invoice.reload, serializer: ClientInvoiceSerializer
         else
           render_errors(@client_invoice.errors.full_messages)
         end
@@ -83,7 +94,7 @@ module Api
             event: v.event,
             who: v.whodunnit,
             when: v.created_at,
-            changes: v.object_changes ? YAML.safe_load(v.object_changes, permitted_classes: [BigDecimal, Date, Time, ActiveSupport::TimeWithZone]) : {}
+            changes: v.object_changes ? YAML.safe_load(v.object_changes, permitted_classes: [ BigDecimal, Date, Time, ActiveSupport::TimeWithZone ]) : {}
           }
         end
         render json: { history: versions }
@@ -93,19 +104,22 @@ module Api
         authorize @client_invoice
 
         if @client_invoice.cae.blank?
-          return render json: { errors: ['La factura no tiene CAE. No se puede generar el PDF.'] }, status: :unprocessable_entity
+          return render json: { errors: [ "La factura no tiene CAE. No se puede generar el PDF." ] }, status: :unprocessable_entity
         end
 
         pdf = Invoices::PdfGeneratorService.new(invoice: @client_invoice).call
         filename = "factura_#{@client_invoice.invoice_type}_#{@client_invoice.number}.pdf"
 
-        send_data pdf, filename: filename, type: 'application/pdf', disposition: 'inline'
+        send_data pdf, filename: filename, type: "application/pdf", disposition: "inline"
       end
 
       private
 
       def set_invoice
-        @client_invoice = ClientInvoice.where(user_id: current_user.id).find(params[:id])
+        @client_invoice = ClientInvoice
+          .includes(:client, :sell_point, lines: :iva)
+          .where(user_id: current_user.id)
+          .find(params[:id])
       end
 
       def client_invoice_params
@@ -114,7 +128,7 @@ module Api
           :sell_point_id, :client_id, :period,
           lines_attributes: [
             :id, :item_id, :description, :quantity,
-            :unit_price, :final_price, :user_id, :iva_id, :_destroy
+            :unit_price, :final_price, :iva_id, :_destroy
           ]
         )
       end

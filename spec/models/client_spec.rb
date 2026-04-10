@@ -3,7 +3,7 @@ require 'rails_helper'
 RSpec.describe Client, type: :model do
   describe 'associations' do
     it { should belong_to(:user) }
-    it { should belong_to(:iva) }
+    it { should belong_to(:iva).optional }
     it { should belong_to(:client_group).optional }
   end
 

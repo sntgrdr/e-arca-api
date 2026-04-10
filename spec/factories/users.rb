@@ -1,7 +1,7 @@
 FactoryBot.define do
   factory :user do
     sequence(:email) { |n| "user#{n}@example.com" }
-    password { 'securepassword12' }
+    password { 'Secure.pass1' }
     sequence(:legal_name) { |n| "Empresa Test #{n}" }
     sequence(:legal_number) { |n| "20-#{n.to_s.rjust(8, '0')}-9" }
     tax_condition { :registered }

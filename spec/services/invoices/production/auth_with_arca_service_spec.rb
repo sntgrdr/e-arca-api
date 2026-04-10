@@ -65,7 +65,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
 
     # Stub the openssl CMS signing command
     mock_status = instance_double(Process::Status, success?: true)
-    allow(Open3).to receive(:capture3).and_return(['', '', mock_status])
+    allow(Open3).to receive(:capture3).and_return([ '', '', mock_status ])
 
     # After sign_ticket runs, stub the CMS file read
     allow(File).to receive(:read).and_call_original
@@ -80,7 +80,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
         allow(Open3).to receive(:capture3) do |*_args|
           mock_status = instance_double(Process::Status, success?: true)
           # Write the fake CMS to the tempfile path that gets created
-          ['', '', mock_status]
+          [ '', '', mock_status ]
         end
 
         allow_any_instance_of(Tempfile).to receive(:path).and_call_original
@@ -102,7 +102,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
 
       it 'returns [token, sign]' do
         result = service.call
-        expect(result).to eq([token, sign])
+        expect(result).to eq([ token, sign ])
       end
 
       it 'saves the token and sign to the user record' do
@@ -138,7 +138,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
 
       it 'returns the cached [token, sign] without calling AFIP' do
         result = service.call
-        expect(result).to eq([cached_token, cached_sign])
+        expect(result).to eq([ cached_token, cached_sign ])
       end
 
       it 'does not make any HTTP request to WSAA' do
@@ -162,7 +162,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
 
         allow(Open3).to receive(:capture3) do |*_args|
           mock_status = instance_double(Process::Status, success?: true)
-          ['', '', mock_status]
+          [ '', '', mock_status ]
         end
 
         allow(File).to receive(:read) do |path|
@@ -188,7 +188,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
 
       it 'returns the new token and sign' do
         result = service.call
-        expect(result).to eq([token, sign])
+        expect(result).to eq([ token, sign ])
       end
     end
 
@@ -205,7 +205,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
         user
 
         failed_status = instance_double(Process::Status, success?: false)
-        allow(Open3).to receive(:capture3).and_return(['', 'openssl error: certificate expired', failed_status])
+        allow(Open3).to receive(:capture3).and_return([ '', 'openssl error: certificate expired', failed_status ])
 
         allow(File).to receive(:read) do |path|
           if path.to_s.end_with?('.xml.cms')
@@ -225,7 +225,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
       before do
         allow(Open3).to receive(:capture3) do |*_args|
           mock_status = instance_double(Process::Status, success?: true)
-          ['', '', mock_status]
+          [ '', '', mock_status ]
         end
 
         allow(File).to receive(:read) do |path|

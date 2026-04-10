@@ -39,23 +39,23 @@ module Api
       def generate_pdfs
         authorize @batch_process
         unless @batch_process.completed?
-          return render json: { errors: ['El proceso aún no ha finalizado.'] }, status: :unprocessable_entity
+          return render json: { errors: [ "El proceso aún no ha finalizado." ] }, status: :unprocessable_entity
         end
 
         BatchPdfGenerationJob.perform_later(@batch_process.id)
-        render json: { message: 'Generación de PDFs iniciada.' }
+        render json: { message: "Generación de PDFs iniciada." }
       end
 
       def download_pdfs
         authorize @batch_process
         unless @batch_process.pdf_generated? && @batch_process.pdf_zip.attached?
-          return render json: { errors: ['Los PDFs aún no están disponibles.'] }, status: :unprocessable_entity
+          return render json: { errors: [ "Los PDFs aún no están disponibles." ] }, status: :unprocessable_entity
         end
 
         send_data @batch_process.pdf_zip.download,
                   filename: @batch_process.pdf_zip.filename.to_s,
                   type: @batch_process.pdf_zip.content_type,
-                  disposition: 'attachment'
+                  disposition: "attachment"
       end
 
       private
@@ -70,7 +70,7 @@ module Api
         )
 
         if permitted[:period].present? && permitted[:period].match?(%r{\A\d{2}/\d{4}\z})
-          month, year = permitted[:period].split('/')
+          month, year = permitted[:period].split("/")
           permitted[:period] = Date.new(year.to_i, month.to_i, 1)
         end
 

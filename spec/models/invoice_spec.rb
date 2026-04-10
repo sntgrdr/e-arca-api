@@ -14,12 +14,12 @@ RSpec.describe Invoice, type: :model do
     let(:client) { create(:client, user: user) }
 
     it 'returns next number as string' do
-      create(:client_invoice, user: user, sell_point: sell_point, client: client, number: '5')
-      expect(ClientInvoice.current_number(user.id, sell_point.id)).to eq('6')
+      create(:client_invoice, user: user, sell_point: sell_point, client: client, number: '5', invoice_type: 'C')
+      expect(ClientInvoice.current_number(user.id, sell_point.id, 'C')).to eq('6')
     end
 
     it 'returns 1 when no invoices exist' do
-      expect(ClientInvoice.current_number(user.id, sell_point.id)).to eq('1')
+      expect(ClientInvoice.current_number(user.id, sell_point.id, 'C')).to eq('1')
     end
   end
 end

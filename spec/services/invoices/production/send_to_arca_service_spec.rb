@@ -16,7 +16,7 @@ RSpec.describe Invoices::Production::SendToArcaService, type: :service do
   before do
     allow(Invoices::Production::AuthWithArcaService)
       .to receive_message_chain(:new, :call)
-      .and_return([token, sign])
+      .and_return([ token, sign ])
   end
 
   def approved_response_xml(cae: '75109284616808', invoice_number: '1')

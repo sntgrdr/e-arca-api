@@ -13,9 +13,9 @@ class ClientInvoice < Invoice
 
   def afip_code
     case invoice_type
-    when 'A', 'EA' then '1'
-    when 'B', 'EB' then '6'
-    when 'C', 'EC' then '11'
+    when "A", "EA" then "1"
+    when "B", "EB" then "6"
+    when "C", "EC" then "11"
     end
   end
 end

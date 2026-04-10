@@ -26,14 +26,14 @@ module Filters
       value = stripped_param(:code)
       return result if value.blank?
 
-      result.where('items.code ILIKE ?', "%#{sanitize(value)}%")
+      result.where("items.code ILIKE ?", "%#{sanitize(value)}%")
     end
 
     def filter_by_name(result)
       value = stripped_param(:name)
       return result if value.blank?
 
-      result.where('items.name ILIKE ?', "%#{sanitize(value)}%")
+      result.where("items.name ILIKE ?", "%#{sanitize(value)}%")
     end
 
     def filter_by_iva_id(result)
@@ -47,14 +47,14 @@ module Filters
       value = stripped_param(:price_from)
       return result if value.blank?
 
-      result.where('items.price >= ?', value.to_f)
+      result.where("items.price >= ?", value.to_f)
     end
 
     def filter_by_price_to(result)
       value = stripped_param(:price_to)
       return result if value.blank?
 
-      result.where('items.price <= ?', value.to_f)
+      result.where("items.price <= ?", value.to_f)
     end
 
     def stripped_param(key)

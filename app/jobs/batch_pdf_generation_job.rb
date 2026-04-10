@@ -15,7 +15,7 @@ class BatchPdfGenerationJob < ApplicationJob
     batch.pdf_zip.attach(
       io: StringIO.new(zip_data),
       filename: "facturas_lote_#{batch.id}.zip",
-      content_type: 'application/zip'
+      content_type: "application/zip"
     )
 
     batch.update!(pdf_generated: true)

@@ -125,7 +125,7 @@ RSpec.describe Filters::ClientsFilterService, type: :service do
     let!(:exempt)         { create(:client, user: user, tax_condition: :exempt) }
 
     context 'with a single value' do
-      let(:params) { { tax_condition: ['final_client'] } }
+      let(:params) { { tax_condition: [ 'final_client' ] } }
 
       it 'returns only clients with that tax condition' do
         expect(filter).to include(final_client)
@@ -134,7 +134,7 @@ RSpec.describe Filters::ClientsFilterService, type: :service do
     end
 
     context 'with multiple values' do
-      let(:params) { { tax_condition: ['final_client', 'registered'] } }
+      let(:params) { { tax_condition: [ 'final_client', 'registered' ] } }
 
       it 'returns clients matching any of the given tax conditions' do
         expect(filter).to include(final_client, registered)
@@ -160,7 +160,7 @@ RSpec.describe Filters::ClientsFilterService, type: :service do
     let!(:no_group)    { create(:client, user: user, client_group: nil) }
 
     context 'with a single group id' do
-      let(:params) { { client_group_id: [group_a.id] } }
+      let(:params) { { client_group_id: [ group_a.id ] } }
 
       it 'returns only clients in that group' do
         expect(filter).to include(client_in_a)
@@ -169,7 +169,7 @@ RSpec.describe Filters::ClientsFilterService, type: :service do
     end
 
     context 'with multiple group ids' do
-      let(:params) { { client_group_id: [group_a.id, group_b.id] } }
+      let(:params) { { client_group_id: [ group_a.id, group_b.id ] } }
 
       it 'returns clients in any of the given groups' do
         expect(filter).to include(client_in_a, client_in_b)
@@ -197,8 +197,8 @@ RSpec.describe Filters::ClientsFilterService, type: :service do
     let(:params) do
       {
         legal_name: 'Target',
-        tax_condition: ['registered'],
-        client_group_id: [group.id]
+        tax_condition: [ 'registered' ],
+        client_group_id: [ group.id ]
       }
     end
 

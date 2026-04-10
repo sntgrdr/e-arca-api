@@ -13,7 +13,7 @@ RSpec.describe Invoices::Development::GetLastInvoiceService, type: :service do
   before do
     allow(Invoices::Development::AuthWithArcaService)
       .to receive_message_chain(:new, :call)
-      .and_return([token, sign])
+      .and_return([ token, sign ])
   end
 
   subject(:service) do

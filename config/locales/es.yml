@@ -1,4 +1,8 @@
 es:
+  errors:
+    messages:
+      password_complexity: "debe tener al menos una mayúscula y un carácter especial (- . _)"
+
   # ── Number / Currency (Argentina) ──────────────────────────────
   number:
     currency:
@@ -145,6 +149,8 @@ es:
       add_product: "Agregar producto"
     show:
       products: "Productos"
+    errors:
+      cannot_edit_authorized: "No se puede editar una factura ya enviada a ARCA."
     flash:
       created: "Factura creada exitosamente."
       updated: "Factura actualizada exitosamente."
