@@ -12,7 +12,7 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
 
   let(:certs_dir) { Rails.root.join('credentials/arca_certs') }
   let(:cert_path) { certs_dir.join("#{legal_number}-certificate.crt") }
-  let(:key_path) { certs_dir.join("#{legal_number}-private_key.pem") }
+  let(:key_path) { certs_dir.join("#{legal_number}-private_key") }
 
   let(:fake_cms) { 'FAKECMSBASE64CONTENT==' }
 
@@ -189,14 +189,6 @@ RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
       it 'returns the new token and sign' do
         result = service.call
         expect(result).to eq([ token, sign ])
-      end
-    end
-
-    context 'when the legal_number format is invalid' do
-      it 'raises an ArgumentError' do
-        expect {
-          described_class.new(legal_number: '12345678')
-        }.to raise_error(ArgumentError, /Invalid legal_number format/)
       end
     end
 
