@@ -5,10 +5,12 @@ class BatchInvoiceProcessSerializer < ActiveModel::Serializer
              :created_at, :item, :sell_point
 
   def item
+    return nil unless object.item
     { id: object.item.id, name: object.item.name, code: object.item.code }
   end
 
   def sell_point
+    return nil unless object.sell_point
     { id: object.sell_point.id, number: object.sell_point.number }
   end
 end
