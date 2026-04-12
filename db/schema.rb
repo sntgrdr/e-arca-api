@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_09_201036) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_10_195412) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -324,15 +324,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_201036) do
     t.string "account_number", default: "", null: false
     t.boolean "active", default: true
     t.date "activity_start"
-    t.string "address", default: "", null: false
+    t.string "address"
     t.string "alias_account", default: "", null: false
     t.text "arca_sign"
     t.text "arca_token"
     t.datetime "arca_token_expires_at"
     t.string "cai", default: "", null: false
-    t.string "city", default: "", null: false
-    t.string "country", default: "", null: false
+    t.string "city"
+    t.string "country"
     t.datetime "created_at", null: false
+    t.string "dni"
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.integer "failed_attempts", default: 0, null: false
@@ -343,11 +344,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_201036) do
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
-    t.string "state", default: "", null: false
+    t.string "state"
     t.integer "tax_condition", default: 0, null: false
     t.string "unlock_token"
     t.datetime "updated_at", null: false
-    t.string "zip_code", default: "", null: false
+    t.string "zip_code"
+    t.index ["dni"], name: "index_users_on_dni", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["legal_name"], name: "index_users_on_legal_name", unique: true
     t.index ["legal_number"], name: "index_users_on_legal_number_unique_except_ones", unique: true, where: "((legal_number)::text <> '11-11111111-1'::text)"

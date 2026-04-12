@@ -15,7 +15,7 @@ module Api
           .where(user_id: current_user.id)
           .find(params[:id])
         authorize batch
-        response.headers['Cache-Control'] = 'no-store'
+        response.headers["Cache-Control"] = "no-store"
         render json: batch, serializer: BatchInvoiceProcessDetailSerializer
       end
 

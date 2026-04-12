@@ -98,7 +98,7 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
     context 'when status is failed' do
       let(:batch_failed) do
         create(:batch_invoice_process, :failed, user: user, item: item, sell_point: sell_point,
-               error_details: [{ client_id: 1, error: 'AFIP timeout' }])
+               error_details: [ { client_id: 1, error: 'AFIP timeout' } ])
       end
 
       it 'returns error_details' do
@@ -120,7 +120,6 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
         expect(body).not_to have_key('error_details')
       end
     end
-
   end
 
   context 'tenant isolation' do
