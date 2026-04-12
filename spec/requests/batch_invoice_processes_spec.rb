@@ -122,6 +122,30 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
     end
   end
 
+  context 'when batch has multiple items' do
+    let(:item2) { create(:item, user: user, iva: iva) }
+    let(:multi_batch) do
+      b = create(:batch_invoice_process, user: user, item: item, sell_point: sell_point)
+      BatchInvoiceProcessItem.create!(batch_invoice_process: b, item: item,  position: 0)
+      BatchInvoiceProcessItem.create!(batch_invoice_process: b, item: item2, position: 1)
+      b
+    end
+
+    it 'returns items array in show response' do
+      get "/api/v1/batch_invoice_processes/#{multi_batch.id}", headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body['items'].map { |i| i['id'] }).to eq([ item.id, item2.id ])
+    end
+
+    it 'returns items array in index response' do
+      multi_batch
+      get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+      body = JSON.parse(response.body)
+      batch_body = body.find { |b| b['id'] == multi_batch.id }
+      expect(batch_body['items'].size).to eq(2)
+    end
+  end
+
   describe 'POST /api/v1/batch_invoice_processes' do
     let(:item2) { create(:item, user: user, iva: iva) }
 

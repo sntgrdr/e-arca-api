@@ -5,7 +5,14 @@ class BatchInvoiceProcessDetailSerializer < ActiveModel::Serializer
              :processed_invoices, :failed_invoices, :pdf_generated,
              :error_message, :error_details, :client_group_id, :item_id,
              :sell_point_id, :created_at, :updated_at,
+             :items,
              :client_invoices, :client_invoices_capped, :client_invoices_total
+
+  def items
+    object.resolved_items.map do |i|
+      { id: i.id, name: i.name, code: i.code }
+    end
+  end
 
   def client_invoices
     @client_invoices ||= object.client_invoices
