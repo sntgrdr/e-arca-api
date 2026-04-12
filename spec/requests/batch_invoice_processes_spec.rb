@@ -122,6 +122,119 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
     end
   end
 
+  describe 'POST /api/v1/batch_invoice_processes' do
+    let(:item2) { create(:item, user: user, iva: iva) }
+
+    context 'with item_ids' do
+      it 'creates a batch with multiple items' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id, item2.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['items'].map { |i| i['id'] }).to eq([ item.id, item2.id ])
+      end
+    end
+
+    context 'with client_ids' do
+      let(:iva2)   { create(:iva, user: user) }
+      let(:client) { create(:client, user: user, iva: iva2) }
+
+      it 'creates a batch scoped to selected clients' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id ],
+               client_ids: [ client.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        batch = BatchInvoiceProcess.last
+        expect(batch.selected_clients.pluck(:id)).to eq([ client.id ])
+      end
+    end
+
+    context 'cap enforcement' do
+      it 'rejects more than 10 item_ids' do
+        items = create_list(:item, 11, user: user, iva: iva)
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: items.map(&:id)
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'rejects more than 100 client_ids' do
+        iva2    = create(:iva, user: user)
+        clients = create_list(:client, 101, user: user, iva: iva2)
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id ],
+               client_ids: clients.map(&:id)
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
+    context 'ownership validation' do
+      let(:other_user) { create(:user) }
+      let(:other_iva)  { create(:iva, user: other_user) }
+      let(:other_item) { create(:item, user: other_user, iva: other_iva) }
+
+      it 'rejects client_ids that do not belong to the selected client_group' do
+        other_group           = create(:client_group, user: user)
+        iva2                  = create(:iva, user: user)
+        client_in_other_group = create(:client, user: user, iva: iva2, client_group: other_group)
+        target_group          = create(:client_group, user: user)
+
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id ],
+               client_group_id: target_group.id,
+               client_ids: [ client_in_other_group.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'rejects item_ids belonging to another user' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ other_item.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
   context 'tenant isolation' do
     it_behaves_like 'a user-scoped resource' do
       let(:resource_path) { '/api/v1/batch_invoice_processes' }
