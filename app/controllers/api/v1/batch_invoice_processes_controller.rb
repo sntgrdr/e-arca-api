@@ -61,7 +61,7 @@ module Api
           return render json: { errors: [ "El proceso aún no ha finalizado." ] }, status: :unprocessable_entity
         end
 
-        BatchPdfGenerationJob.perform_later(@batch_process.id)
+        BatchPdfGenerationJob.perform_later(@batch_process.id, current_user.id)
         render json: { message: "Generación de PDFs iniciada." }
       end
 
@@ -131,7 +131,7 @@ module Api
             ClientGroup.where(user_id: current_user.id, id: group_id)
                        .first&.clients&.where(active: true)&.count.to_i
           else
-            Client.all_my_clients(current_user.id).count
+            Client.all_my_clients(current_user.id).active.count
           end
 
           if resolved_count > BatchInvoiceProcess::MAX_CLIENTS

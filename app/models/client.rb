@@ -10,6 +10,6 @@ class Client < ApplicationRecord
 
   enum :tax_condition, ::Constants::Arca::TAX_CONDITIONS
 
-  scope :all_my_clients, ->(user_id) { where(user_id: user_id, active: true) }
+  scope :all_my_clients, ->(user_id) { where(user_id: user_id) }
   scope :active, -> { where(active: true) }
 end

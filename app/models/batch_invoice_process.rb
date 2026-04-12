@@ -44,7 +44,7 @@ class BatchInvoiceProcess < ApplicationRecord
     elsif client_group_id?
       client_group.clients.where(active: true)
     else
-      Client.all_my_clients(user_id)
+      Client.all_my_clients(user_id).active
     end
   end
 end
