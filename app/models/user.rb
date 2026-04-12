@@ -12,7 +12,7 @@ class User < ApplicationRecord
   validates :legal_number,
             uniqueness: { allow_nil: true },
             unless: -> { legal_number == "11-11111111-1" }
-  validates :dni, presence: true, uniqueness: { allow_nil: true }
+  validates :dni, uniqueness: { allow_nil: true }
   validate :dni_matches_legal_number, if: -> { dni.present? && legal_number.present? }
 
   private

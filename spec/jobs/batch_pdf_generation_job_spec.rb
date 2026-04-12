@@ -23,7 +23,7 @@ RSpec.describe BatchPdfGenerationJob, type: :job do
   end
 
   def perform_job
-    described_class.new.perform(batch.id)
+    described_class.new.perform(batch.id, user.id)
   end
 
   describe 'happy path' do
@@ -55,7 +55,7 @@ RSpec.describe BatchPdfGenerationJob, type: :job do
 
   describe 'when batch does not exist' do
     it 'is discarded (does not propagate the error) when enqueued through the test adapter' do
-      described_class.perform_later(0)
+      described_class.perform_later(0, user.id)
       expect do
         perform_enqueued_jobs
       end.not_to raise_error
