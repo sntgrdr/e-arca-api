@@ -2,6 +2,7 @@ es:
   errors:
     messages:
       password_complexity: "debe tener al menos una mayúscula y un carácter especial (- . _)"
+      dni_mismatch: "no coincide con el CUIT/CUIL"
 
   # ── Number / Currency (Argentina) ──────────────────────────────
   number:
@@ -264,6 +265,16 @@ es:
       processing: "Procesando"
       completed: "Completado"
       failed: "Error"
+    errors:
+      too_many_items: "No podés seleccionar más de %{max} productos por proceso"
+      too_many_clients: "No podés seleccionar más de %{max} clientes por proceso"
+      too_many_resolved_clients: "El grupo tiene %{count} clientes activos, el máximo permitido es %{max}"
+      invalid_items: "Uno o más productos no te pertenecen"
+      invalid_clients: "Uno o más clientes no te pertenecen"
+      not_completed: "El proceso aún no ha finalizado."
+      pdfs_not_available: "Los PDFs aún no están disponibles."
+    messages:
+      pdfs_generating: "Generación de PDFs iniciada."
 
   # ── IVAs ──────────────────────────────────────────────────────
   ivas:

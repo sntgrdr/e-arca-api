@@ -7,8 +7,8 @@ class BatchPdfGenerationJob < ApplicationJob
 
   discard_on ActiveRecord::RecordNotFound
 
-  def perform(batch_invoice_process_id)
-    batch = BatchInvoiceProcess.find(batch_invoice_process_id)
+  def perform(batch_invoice_process_id, user_id)
+    batch = BatchInvoiceProcess.where(user_id: user_id).find(batch_invoice_process_id)
 
     zip_data = Invoices::BatchPdfZipGeneratorService.new(batch_process: batch).call
 

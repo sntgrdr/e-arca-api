@@ -10,30 +10,77 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
   let(:sell_point) { create(:sell_point, user: user) }
 
   describe 'GET /api/v1/batch_invoice_processes' do
-    before do
-      create_list(:batch_invoice_process, 2, user: user, item: item, sell_point: sell_point)
+    context 'without a client_group' do
+      before do
+        create_list(:batch_invoice_process, 2, user: user, item: item, sell_point: sell_point)
+      end
+
+      it 'returns processes with item and sell_point' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        expect(response).to have_http_status(:ok)
+        body = JSON.parse(response.body)
+        expect(body.length).to eq(2)
+        expect(body.first).to include('item', 'sell_point')
+        expect(body.first['item']).to include('id', 'name', 'code')
+        expect(body.first['sell_point']).to include('id', 'number')
+      end
+
+      it 'returns client_group as null when not set' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body.first['client_group']).to be_nil
+      end
+
+      it 'does not include client_invoices' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body.first).not_to have_key('client_invoices')
+      end
     end
 
-    it 'returns processes with item and sell_point' do
-      get '/api/v1/batch_invoice_processes', headers: headers, as: :json
-      expect(response).to have_http_status(:ok)
-      body = JSON.parse(response.body)
-      expect(body.length).to eq(2)
-      expect(body.first).to include('item', 'sell_point')
-      expect(body.first['item']).to include('id', 'name', 'code')
-      expect(body.first['sell_point']).to include('id', 'number')
-    end
+    context 'with a client_group' do
+      let(:group) { create(:client_group, user: user) }
 
-    it 'does not include client_invoices' do
-      get '/api/v1/batch_invoice_processes', headers: headers, as: :json
-      body = JSON.parse(response.body)
-      expect(body.first).not_to have_key('client_invoices')
+      before do
+        create(:batch_invoice_process, user: user, item: item, sell_point: sell_point, client_group: group)
+      end
+
+      it 'returns client_group with id and name' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body.first['client_group']).to include('id' => group.id, 'name' => group.name)
+      end
     end
   end
 
   describe 'GET /api/v1/batch_invoice_processes/:id' do
     let(:batch) do
       create(:batch_invoice_process, user: user, item: item, sell_point: sell_point)
+    end
+
+    it 'returns sell_point with id and number' do
+      get "/api/v1/batch_invoice_processes/#{batch.id}", headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body['sell_point']).to include('id' => sell_point.id, 'number' => sell_point.number)
+    end
+
+    it 'returns client_group as null when not set' do
+      get "/api/v1/batch_invoice_processes/#{batch.id}", headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body['client_group']).to be_nil
+    end
+
+    context 'when batch has a client_group' do
+      let(:group) { create(:client_group, user: user) }
+      let(:batch_with_group) do
+        create(:batch_invoice_process, user: user, item: item, sell_point: sell_point, client_group: group)
+      end
+
+      it 'returns client_group with id and name' do
+        get "/api/v1/batch_invoice_processes/#{batch_with_group.id}", headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body['client_group']).to include('id' => group.id, 'name' => group.name)
+      end
     end
 
     context 'with associated invoices' do
@@ -44,14 +91,15 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
                     batch_invoice_process: batch)
       end
 
-      it 'returns client_invoices with slim fields' do
+      it 'returns client_invoices with slim fields including sell_point_number' do
         get "/api/v1/batch_invoice_processes/#{batch.id}", headers: headers, as: :json
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
         expect(body).to have_key('client_invoices')
         invoice = body['client_invoices'].first
         expect(invoice.keys).to match_array(%w[id number date client_name client_legal_number
-                                               cae afip_authorized_at total_price])
+                                               cae afip_authorized_at total_price sell_point_number])
+        expect(invoice['sell_point_number']).to eq(sell_point.number)
       end
 
       it 'returns client_invoices_total and client_invoices_capped' do
@@ -118,6 +166,143 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
         get "/api/v1/batch_invoice_processes/#{batch_completed.id}", headers: headers, as: :json
         body = JSON.parse(response.body)
         expect(body).not_to have_key('error_details')
+      end
+    end
+  end
+
+  context 'when batch has multiple items' do
+    let(:item2) { create(:item, user: user, iva: iva) }
+    let(:multi_batch) do
+      b = create(:batch_invoice_process, user: user, item: item, sell_point: sell_point)
+      BatchInvoiceProcessItem.create!(batch_invoice_process: b, item: item,  position: 0)
+      BatchInvoiceProcessItem.create!(batch_invoice_process: b, item: item2, position: 1)
+      b
+    end
+
+    it 'returns items array in show response' do
+      get "/api/v1/batch_invoice_processes/#{multi_batch.id}", headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body['items'].map { |i| i['id'] }).to eq([ item.id, item2.id ])
+    end
+
+    it 'returns items array in index response' do
+      multi_batch
+      get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+      body = JSON.parse(response.body)
+      batch_body = body.find { |b| b['id'] == multi_batch.id }
+      expect(batch_body['items'].size).to eq(2)
+    end
+  end
+
+  describe 'POST /api/v1/batch_invoice_processes' do
+    let(:item2) { create(:item, user: user, iva: iva) }
+
+    context 'with item_ids' do
+      it 'creates a batch with multiple items' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id, item2.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['items'].map { |i| i['id'] }).to eq([ item.id, item2.id ])
+      end
+    end
+
+    context 'with client_ids' do
+      let(:iva2)   { create(:iva, user: user) }
+      let(:client) { create(:client, user: user, iva: iva2) }
+
+      it 'creates a batch scoped to selected clients' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id ],
+               client_ids: [ client.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        batch = BatchInvoiceProcess.last
+        expect(batch.selected_clients.pluck(:id)).to eq([ client.id ])
+      end
+    end
+
+    context 'cap enforcement' do
+      it 'rejects more than 10 item_ids' do
+        items = create_list(:item, 11, user: user, iva: iva)
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: items.map(&:id)
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'rejects more than 100 client_ids' do
+        iva2    = create(:iva, user: user)
+        clients = create_list(:client, 101, user: user, iva: iva2)
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id ],
+               client_ids: clients.map(&:id)
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+
+    context 'ownership validation' do
+      let(:other_user) { create(:user) }
+      let(:other_iva)  { create(:iva, user: other_user) }
+      let(:other_item) { create(:item, user: other_user, iva: other_iva) }
+
+      it 'rejects client_ids that do not belong to the selected client_group' do
+        other_group           = create(:client_group, user: user)
+        iva2                  = create(:iva, user: user)
+        client_in_other_group = create(:client, user: user, iva: iva2, client_group: other_group)
+        target_group          = create(:client_group, user: user)
+
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ item.id ],
+               client_group_id: target_group.id,
+               client_ids: [ client_in_other_group.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'rejects item_ids belonging to another user' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               sell_point_id: sell_point.id,
+               date: Date.current.iso8601,
+               period: '04/2026',
+               item_ids: [ other_item.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
       end
     end
   end

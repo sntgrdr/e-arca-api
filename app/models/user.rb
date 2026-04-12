@@ -5,12 +5,17 @@ class User < ApplicationRecord
 
   enum :tax_condition, ::Constants::Arca::TAX_CONDITIONS.symbolize_keys
 
+  before_validation :sanitize_legal_number
+
+  validates :password, length: { minimum: 8 }, if: -> { password.present? }
   validate :password_complexity, if: -> { password.present? }
 
   validates :legal_name, uniqueness: { case_sensitive: false }
   validates :legal_number,
-            uniqueness: true,
-            unless: -> { legal_number == "11-11111111-1" }
+            uniqueness: { allow_nil: true },
+            unless: -> { legal_number == "11111111111" }
+  validates :dni, uniqueness: { allow_nil: true }
+  validate :dni_matches_legal_number, if: -> { dni.present? && legal_number.present? }
 
   private
 
@@ -19,5 +24,15 @@ class User < ApplicationRecord
 
     errors.add(:password, :complexity,
                message: I18n.t("errors.messages.password_complexity"))
+  end
+
+  def sanitize_legal_number
+    self.legal_number = legal_number.gsub(/\D/, "") if legal_number.present?
+  end
+
+  def dni_matches_legal_number
+    unless legal_number[2, 8] == dni
+      errors.add(:dni, I18n.t("errors.messages.dni_mismatch"))
+    end
   end
 end

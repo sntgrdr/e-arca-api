@@ -10,7 +10,7 @@ module Api
 
       def update
         if current_user.update(user_params)
-          render json: current_user, serializer: UserSerializer
+          render json: { data: UserSerializer.new(current_user).as_json, message: I18n.t("users.flash.updated") }
         else
           render_errors(current_user.errors.full_messages)
         end

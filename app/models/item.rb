@@ -5,7 +5,7 @@ class Item < ApplicationRecord
 
   validates :name, :code, :price, presence: true
   validates :price, numericality: { greater_than: 0 }
-  validates :code, uniqueness: { scope: :user_id }
+  validates :code, uniqueness: { scope: :user_id, allow_nil: true }
 
   scope :all_my_items, ->(user_id) { where(user_id: user_id) }
   scope :active, -> { where(active: true) }

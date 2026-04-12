@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Invoices::FeCaePayloadBuilderService, type: :service do
-  let(:user) { create(:user, legal_number: '20-12345678-9') }
+  let(:user) { create(:user, legal_number: '20123456789', dni: '12345678') }
   let(:client) { create(:client, user: user, tax_condition: :final_client) }
   let(:sell_point) { create(:sell_point, user: user, number: '1') }
   let(:iva) { create(:iva, user: user, percentage: 21.0) }

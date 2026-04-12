@@ -13,6 +13,25 @@ RSpec.describe 'Api::V1::Clients', type: :request do
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body).length).to eq(3)
     end
+
+    it 'returns client_group_name as null when client has no group' do
+      get '/api/v1/clients', headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body.first['client_group_name']).to be_nil
+    end
+
+    context 'when client belongs to a group' do
+      let(:group) { create(:client_group, user: user) }
+
+      before { create(:client, user: user, iva: iva, client_group: group) }
+
+      it 'returns client_group_name' do
+        get '/api/v1/clients', headers: headers, as: :json
+        body = JSON.parse(response.body)
+        client_with_group = body.find { |c| c['client_group_id'] == group.id }
+        expect(client_with_group['client_group_name']).to eq(group.name)
+      end
+    end
   end
 
   describe 'POST /api/v1/clients' do

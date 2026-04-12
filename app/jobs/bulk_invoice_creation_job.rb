@@ -9,18 +9,21 @@ class BulkInvoiceCreationJob < ApplicationJob
   discard_on ActiveRecord::RecordNotFound
 
   def perform(batch_invoice_process_id)
-    batch = BatchInvoiceProcess.find(batch_invoice_process_id)
-    batch.update!(status: :processing)
+    batch = BatchInvoiceProcess
+      .includes(:batch_invoice_process_items, :batch_items,
+                :batch_invoice_process_clients, :selected_clients)
+      .find(batch_invoice_process_id)
 
-    clients = if batch.client_group_id.present?
-                batch.client_group.clients.where(active: true)
-    else
-                Client.all_my_clients(batch.user_id)
-    end
+    # Fix 3: guard status transition on retry — avoid resetting if already processing
+    batch.update!(status: :processing) unless batch.processing?
 
+    clients = batch.resolved_clients
     batch.update!(total_invoices: clients.count)
 
-    clients.find_each do |client|
+    # Fix 1: accumulate errors locally to avoid stale in-memory counter reads
+    error_log = []
+
+    clients.each do |client|
       next if ClientInvoice.exists?(batch_invoice_process_id: batch.id, client_id: client.id)
 
       begin
@@ -31,60 +34,79 @@ class BulkInvoiceCreationJob < ApplicationJob
           "[BulkInvoiceCreationJob] batch_id=#{batch.id} client_id=#{client.id} #{e.class}: #{e.message}"
         )
         batch.increment!(:failed_invoices)
-        batch.update!(
-          error_details: batch.error_details + [ {
-            client_id: client.id,
-            client_name: client.legal_name,
-            error: "#{e.class}: #{e.message}"
-          } ]
-        )
+        error_log << {
+          client_id: client.id,
+          client_name: client.legal_name,
+          error: "#{e.class}: #{e.message}"
+        }
       end
     end
 
-    if batch.failed_invoices > 0
+    if error_log.any?
+      batch.reload
       batch.update!(
-        status: :completed,
-        error_message: "#{batch.processed_invoices} created, #{batch.failed_invoices} failed"
+        status:        :completed,
+        error_message: "#{batch.processed_invoices} creadas, #{batch.failed_invoices} fallidas",
+        error_details: error_log
       )
     else
       batch.update!(status: :completed)
     end
   rescue StandardError => e
     Rails.logger.error("[BulkInvoiceCreationJob] batch_id=#{batch_invoice_process_id} FATAL: #{e.class}: #{e.message}")
-    batch = BatchInvoiceProcess.find_by(id: batch_invoice_process_id)
-    batch&.update!(status: :failed, error_message: e.message)
+    BatchInvoiceProcess.find_by(id: batch_invoice_process_id)
+                       &.update!(status: :failed, error_message: e.message)
     raise
   end
 
   private
 
+  # Uses a PostgreSQL advisory lock to prevent two concurrent jobs for the same
+  # (user_id, sell_point_id) from racing on the next invoice number.
+  # Fix 2: use two-argument pg_advisory_xact_lock with raw integer IDs to eliminate
+  # CRC32 collision risk across different (user_id, sell_point_id) pairs.
   def create_invoice_for_client(batch, client)
-    number = ClientInvoice.current_number(batch.user_id, batch.sell_point_id, "C")
-    item = batch.item
-    iva_percentage = item.iva&.percentage || 0
-    gross_price = (item.price * (1 + (iva_percentage / 100.0))).round(4)
+    items = batch.resolved_items
 
-    ClientInvoice.create!(
-      number: number,
-      date: batch.date,
-      period: batch.period,
-      invoice_type: "C",
-      sell_point_id: batch.sell_point_id,
-      user_id: batch.user_id,
-      client_id: client.id,
-      batch_invoice_process_id: batch.id,
-      total_price: gross_price,
-      lines_attributes: [
+    ApplicationRecord.transaction do
+      ApplicationRecord.connection.exec_query(
+        "SELECT pg_advisory_xact_lock($1, $2)",
+        "advisory_lock",
+        [ batch.user_id, batch.sell_point_id ]
+      )
+
+      number      = ClientInvoice.current_number(batch.user_id, batch.sell_point_id, "C")
+      total_price = items.sum do |item|
+        iva_percentage = item.iva&.percentage || 0
+        (item.price * (1 + (iva_percentage / 100.0))).round(4)
+      end
+
+      lines = items.map do |item|
+        iva_percentage = item.iva&.percentage || 0
+        gross_price    = (item.price * (1 + (iva_percentage / 100.0))).round(4)
         {
-          item_id: item.id,
-          iva_id: item.iva_id,
+          item_id:     item.id,
+          iva_id:      item.iva_id,
           description: item.name,
-          quantity: 1,
-          unit_price: item.price,
+          quantity:    1,
+          unit_price:  item.price,
           final_price: gross_price,
-          user_id: batch.user_id
+          user_id:     batch.user_id
         }
-      ]
-    )
+      end
+
+      ClientInvoice.create!(
+        number:                   number,
+        date:                     batch.date,
+        period:                   batch.period,
+        invoice_type:             "C",
+        sell_point_id:            batch.sell_point_id,
+        user_id:                  batch.user_id,
+        client_id:                client.id,
+        batch_invoice_process_id: batch.id,
+        total_price:              total_price,
+        lines_attributes:         lines
+      )
+    end
   end
 end

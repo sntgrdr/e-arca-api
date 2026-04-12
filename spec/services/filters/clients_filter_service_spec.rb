@@ -89,7 +89,7 @@ RSpec.describe Filters::ClientsFilterService, type: :service do
     end
 
     context 'with case-insensitive input' do
-      let(:params) { { legal_number: '30-12345678' } }
+      let(:params) { { legal_number: '3012345678' } }
 
       it 'matches the legal number' do
         expect(filter).to include(client_a)

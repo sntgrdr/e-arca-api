@@ -25,7 +25,7 @@ module Api
             :legal_name, :legal_number, :name,
             :tax_condition, :alias_account, :account_number,
             :address, :zip_code, :city, :state, :country,
-            :cai, :activity_start
+            :cai, :activity_start, :dni
           )
         end
       end
