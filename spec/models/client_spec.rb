@@ -14,7 +14,19 @@ RSpec.describe Client, type: :model do
     it { should validate_presence_of(:legal_number) }
     it { should validate_presence_of(:tax_condition) }
     it { should validate_uniqueness_of(:legal_name).scoped_to(:user_id) }
-    it { should validate_uniqueness_of(:legal_number).scoped_to(:user_id).case_insensitive }
+    it 'enforces uniqueness of legal_number within the same user' do
+      existing = create(:client)
+      duplicate = build(:client, user: existing.user, legal_number: existing.legal_number)
+      expect(duplicate).not_to be_valid
+      expect(duplicate.errors[:legal_number]).to be_present
+    end
+
+    it 'allows the same legal_number for different users' do
+      existing = create(:client)
+      other_user = create(:user)
+      other = build(:client, user: other_user, legal_number: existing.legal_number)
+      expect(other).to be_valid
+    end
   end
 
   describe 'scopes' do
