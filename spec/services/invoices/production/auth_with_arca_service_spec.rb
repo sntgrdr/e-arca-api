@@ -3,7 +3,8 @@ require 'open3'
 
 RSpec.describe Invoices::Production::AuthWithArcaService, type: :service do
   let(:legal_number) { '20123456789' }
-  let(:user) { create(:user, legal_number: legal_number, arca_token: nil, arca_sign: nil, arca_token_expires_at: nil) }
+  let(:dni) { '12345678' }
+  let(:user) { create(:user, legal_number: legal_number, dni: dni, arca_token: nil, arca_sign: nil, arca_token_expires_at: nil) }
 
   let(:wsaa_url) { 'https://wsaa.afip.gov.ar/ws/services/LoginCms' }
   let(:token) { 'PD94bWwgdmVyc2lvbj0iMS4wIj9TOKEN' }
