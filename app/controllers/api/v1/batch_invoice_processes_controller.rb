@@ -153,7 +153,6 @@ module Api
             position: position
           )
         end
-        batch.update_column(:item_id, item_ids.first)
       end
 
       def attach_clients(batch, client_ids)
