@@ -50,7 +50,7 @@ module Api
       def client_params
         params.require(:client).permit(
           :legal_name, :legal_number, :tax_condition, :name,
-          :active, :iva_id, :client_group_id
+          :active, :iva_id, :client_group_id, :dni
         )
       end
     end
