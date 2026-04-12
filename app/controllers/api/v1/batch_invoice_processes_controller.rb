@@ -58,17 +58,17 @@ module Api
       def generate_pdfs
         authorize @batch_process
         unless @batch_process.completed?
-          return render json: { errors: [ "El proceso aún no ha finalizado." ] }, status: :unprocessable_entity
+          return render json: { errors: [ I18n.t("batch_invoice_processes.errors.not_completed") ] }, status: :unprocessable_entity
         end
 
         BatchPdfGenerationJob.perform_later(@batch_process.id, current_user.id)
-        render json: { message: "Generación de PDFs iniciada." }
+        render json: { message: I18n.t("batch_invoice_processes.messages.pdfs_generating") }
       end
 
       def download_pdfs
         authorize @batch_process
         unless @batch_process.pdf_generated? && @batch_process.pdf_zip.attached?
-          return render json: { errors: [ "Los PDFs aún no están disponibles." ] }, status: :unprocessable_entity
+          return render json: { errors: [ I18n.t("batch_invoice_processes.errors.pdfs_not_available") ] }, status: :unprocessable_entity
         end
 
         send_data @batch_process.pdf_zip.download,
