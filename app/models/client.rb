@@ -6,7 +6,7 @@ class Client < ApplicationRecord
   belongs_to :client_group, optional: true
 
   validates :legal_name, :legal_number, :tax_condition, presence: true
-  validates :legal_name, :legal_number, uniqueness: { scope: :user_id }
+  validates :legal_name, :legal_number, uniqueness: { scope: :user_id, allow_nil: true }
 
   enum :tax_condition, ::Constants::Arca::TAX_CONDITIONS
 
