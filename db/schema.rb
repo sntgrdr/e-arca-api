@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_10_195412) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_12_035150) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_195412) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "batch_invoice_process_clients", force: :cascade do |t|
+    t.bigint "batch_invoice_process_id", null: false
+    t.bigint "client_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["batch_invoice_process_id", "client_id"], name: "index_bip_clients_on_bip_id_and_client_id", unique: true
+    t.index ["batch_invoice_process_id"], name: "idx_on_batch_invoice_process_id_c1f137dd10"
+    t.index ["client_id"], name: "index_batch_invoice_process_clients_on_client_id"
+  end
+
+  create_table "batch_invoice_process_items", force: :cascade do |t|
+    t.bigint "batch_invoice_process_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "item_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["batch_invoice_process_id", "item_id"], name: "index_bip_items_on_bip_id_and_item_id", unique: true
+    t.index ["batch_invoice_process_id"], name: "index_batch_invoice_process_items_on_batch_invoice_process_id"
+    t.index ["item_id"], name: "index_batch_invoice_process_items_on_item_id"
   end
 
   create_table "batch_invoice_processes", force: :cascade do |t|
@@ -370,6 +391,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_195412) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "batch_invoice_process_clients", "batch_invoice_processes"
+  add_foreign_key "batch_invoice_process_clients", "clients"
+  add_foreign_key "batch_invoice_process_items", "batch_invoice_processes"
+  add_foreign_key "batch_invoice_process_items", "items"
   add_foreign_key "batch_invoice_processes", "client_groups"
   add_foreign_key "batch_invoice_processes", "items"
   add_foreign_key "batch_invoice_processes", "sell_points"
