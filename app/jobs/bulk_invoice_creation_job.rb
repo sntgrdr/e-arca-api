@@ -1,5 +1,3 @@
-require "zlib"
-
 class BulkInvoiceCreationJob < ApplicationJob
   queue_as :default
 
@@ -16,10 +14,14 @@ class BulkInvoiceCreationJob < ApplicationJob
                 :batch_invoice_process_clients, :selected_clients)
       .find(batch_invoice_process_id)
 
-    batch.update!(status: :processing)
+    # Fix 3: guard status transition on retry — avoid resetting if already processing
+    batch.update!(status: :processing) unless batch.processing?
 
     clients = batch.resolved_clients
     batch.update!(total_invoices: clients.count)
+
+    # Fix 1: accumulate errors locally to avoid stale in-memory counter reads
+    error_log = []
 
     clients.find_each do |client|
       next if ClientInvoice.exists?(batch_invoice_process_id: batch.id, client_id: client.id)
@@ -32,20 +34,19 @@ class BulkInvoiceCreationJob < ApplicationJob
           "[BulkInvoiceCreationJob] batch_id=#{batch.id} client_id=#{client.id} #{e.class}: #{e.message}"
         )
         batch.increment!(:failed_invoices)
-        batch.update!(
-          error_details: batch.error_details + [ {
-            client_id: client.id,
-            client_name: client.legal_name,
-            error: "#{e.class}: #{e.message}"
-          } ]
-        )
+        error_log << {
+          client_id: client.id,
+          client_name: client.legal_name,
+          error: "#{e.class}: #{e.message}"
+        }
       end
     end
 
-    if batch.failed_invoices > 0
+    if error_log.any?
       batch.update!(
-        status: :completed,
-        error_message: "#{batch.processed_invoices} creadas, #{batch.failed_invoices} fallidas"
+        status:        :completed,
+        error_message: "#{batch.reload.processed_invoices} creadas, #{batch.reload.failed_invoices} fallidas",
+        error_details: error_log
       )
     else
       batch.update!(status: :completed)
@@ -60,14 +61,15 @@ class BulkInvoiceCreationJob < ApplicationJob
   private
 
   # Uses a PostgreSQL advisory lock to prevent two concurrent jobs for the same
-  # (user, sell_point, invoice_type) from racing on the next invoice number.
+  # (user_id, sell_point_id) from racing on the next invoice number.
+  # Fix 2: use two-argument pg_advisory_xact_lock with raw integer IDs to eliminate
+  # CRC32 collision risk across different (user_id, sell_point_id) pairs.
   def create_invoice_for_client(batch, client)
-    items    = batch.resolved_items
-    lock_key = Zlib.crc32("invoice_number_#{batch.user_id}_#{batch.sell_point_id}_C")
+    items = batch.resolved_items
 
     ApplicationRecord.transaction do
       ApplicationRecord.connection.execute(
-        "SELECT pg_advisory_xact_lock(#{lock_key})"
+        "SELECT pg_advisory_xact_lock(#{batch.user_id.to_i}, #{batch.sell_point_id.to_i})"
       )
 
       number      = ClientInvoice.current_number(batch.user_id, batch.sell_point_id, "C")
