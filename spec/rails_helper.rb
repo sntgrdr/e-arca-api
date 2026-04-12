@@ -11,6 +11,9 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 require 'rspec/rails'
 # Add additional requires below this line. Rails is not loaded until this point!
 
+# Suppress Prawn's built-in font internationalization warning — it's not actionable in tests.
+Prawn::Fonts::AFM.hide_m17n_warning = true
+
 Dir[Rails.root.join('spec/support/**/*.rb')].each { |f| require f }
 
 # Requires supporting ruby files with custom matchers and macros, etc, in

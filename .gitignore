@@ -31,7 +31,7 @@
 # Ignore master key for decrypting credentials and more.
 /config/master.key
 /.claude
-/docs/
+/docs/*
 
 # Ignore certs
 /config/arca_certs/*

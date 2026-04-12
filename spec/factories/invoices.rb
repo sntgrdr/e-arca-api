@@ -8,6 +8,7 @@ FactoryBot.define do
     period { Date.current }
     invoice_type { 'C' }
     total_price { 1000.0 }
+    batch_invoice_process_id { nil }
 
     trait :with_cae do
       cae { '12345678901234' }
