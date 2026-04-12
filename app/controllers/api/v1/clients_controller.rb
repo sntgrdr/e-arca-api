@@ -4,7 +4,7 @@ module Api
       before_action :set_client, only: %i[show update destroy]
 
       def index
-        base_scope = policy_scope(Client).active
+        base_scope = policy_scope(Client).active.includes(:iva, :client_group)
         filtered = ::Filters::ClientsFilterService.new(params, base_scope).call
         result = paginate(filtered)
         render json: result[:data], meta: result[:pagination], each_serializer: ClientSerializer

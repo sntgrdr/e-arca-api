@@ -5,13 +5,14 @@ module Api
 
       def index
         processes = policy_scope(BatchInvoiceProcess)
-          .includes(:item, :sell_point, :batch_items)
+          .includes(:item, :sell_point, :client_group, :batch_items)
           .order(created_at: :desc)
         render json: processes, each_serializer: BatchInvoiceProcessSerializer
       end
 
       def show
         batch = BatchInvoiceProcess
+          .includes(:sell_point, :client_group, :item, :batch_items)
           .where(user_id: current_user.id)
           .find(params[:id])
         authorize batch

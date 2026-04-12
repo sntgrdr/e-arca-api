@@ -17,7 +17,7 @@ class Client < ApplicationRecord
   private
 
   def sanitize_legal_number
-    self.legal_number = legal_number.gsub(/\D/, '') if legal_number.present?
+    self.legal_number = legal_number.gsub(/\D/, "") if legal_number.present?
   end
   scope :active, -> { where(active: true) }
 end

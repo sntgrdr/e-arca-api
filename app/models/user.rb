@@ -27,7 +27,7 @@ class User < ApplicationRecord
   end
 
   def sanitize_legal_number
-    self.legal_number = legal_number.gsub(/\D/, '') if legal_number.present?
+    self.legal_number = legal_number.gsub(/\D/, "") if legal_number.present?
   end
 
   def dni_matches_legal_number

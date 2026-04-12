@@ -10,30 +10,77 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
   let(:sell_point) { create(:sell_point, user: user) }
 
   describe 'GET /api/v1/batch_invoice_processes' do
-    before do
-      create_list(:batch_invoice_process, 2, user: user, item: item, sell_point: sell_point)
+    context 'without a client_group' do
+      before do
+        create_list(:batch_invoice_process, 2, user: user, item: item, sell_point: sell_point)
+      end
+
+      it 'returns processes with item and sell_point' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        expect(response).to have_http_status(:ok)
+        body = JSON.parse(response.body)
+        expect(body.length).to eq(2)
+        expect(body.first).to include('item', 'sell_point')
+        expect(body.first['item']).to include('id', 'name', 'code')
+        expect(body.first['sell_point']).to include('id', 'number')
+      end
+
+      it 'returns client_group as null when not set' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body.first['client_group']).to be_nil
+      end
+
+      it 'does not include client_invoices' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body.first).not_to have_key('client_invoices')
+      end
     end
 
-    it 'returns processes with item and sell_point' do
-      get '/api/v1/batch_invoice_processes', headers: headers, as: :json
-      expect(response).to have_http_status(:ok)
-      body = JSON.parse(response.body)
-      expect(body.length).to eq(2)
-      expect(body.first).to include('item', 'sell_point')
-      expect(body.first['item']).to include('id', 'name', 'code')
-      expect(body.first['sell_point']).to include('id', 'number')
-    end
+    context 'with a client_group' do
+      let(:group) { create(:client_group, user: user) }
 
-    it 'does not include client_invoices' do
-      get '/api/v1/batch_invoice_processes', headers: headers, as: :json
-      body = JSON.parse(response.body)
-      expect(body.first).not_to have_key('client_invoices')
+      before do
+        create(:batch_invoice_process, user: user, item: item, sell_point: sell_point, client_group: group)
+      end
+
+      it 'returns client_group with id and name' do
+        get '/api/v1/batch_invoice_processes', headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body.first['client_group']).to include('id' => group.id, 'name' => group.name)
+      end
     end
   end
 
   describe 'GET /api/v1/batch_invoice_processes/:id' do
     let(:batch) do
       create(:batch_invoice_process, user: user, item: item, sell_point: sell_point)
+    end
+
+    it 'returns sell_point with id and number' do
+      get "/api/v1/batch_invoice_processes/#{batch.id}", headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body['sell_point']).to include('id' => sell_point.id, 'number' => sell_point.number)
+    end
+
+    it 'returns client_group as null when not set' do
+      get "/api/v1/batch_invoice_processes/#{batch.id}", headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body['client_group']).to be_nil
+    end
+
+    context 'when batch has a client_group' do
+      let(:group) { create(:client_group, user: user) }
+      let(:batch_with_group) do
+        create(:batch_invoice_process, user: user, item: item, sell_point: sell_point, client_group: group)
+      end
+
+      it 'returns client_group with id and name' do
+        get "/api/v1/batch_invoice_processes/#{batch_with_group.id}", headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body['client_group']).to include('id' => group.id, 'name' => group.name)
+      end
     end
 
     context 'with associated invoices' do
@@ -44,14 +91,15 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
                     batch_invoice_process: batch)
       end
 
-      it 'returns client_invoices with slim fields' do
+      it 'returns client_invoices with slim fields including sell_point_number' do
         get "/api/v1/batch_invoice_processes/#{batch.id}", headers: headers, as: :json
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
         expect(body).to have_key('client_invoices')
         invoice = body['client_invoices'].first
         expect(invoice.keys).to match_array(%w[id number date client_name client_legal_number
-                                               cae afip_authorized_at total_price])
+                                               cae afip_authorized_at total_price sell_point_number])
+        expect(invoice['sell_point_number']).to eq(sell_point.number)
       end
 
       it 'returns client_invoices_total and client_invoices_capped' do
