@@ -120,7 +120,7 @@ RSpec.describe BulkInvoiceCreationJob, type: :job do
     it 'sets an error_message summarising created vs failed counts' do
       perform_job
       batch.reload
-      expect(batch.error_message).to match(/\d+ created, \d+ failed/)
+      expect(batch.error_message).to match(/\d+ creadas, \d+ fallidas/)
     end
 
     it 'records error_details for the failed client' do

@@ -69,10 +69,10 @@ class BulkInvoiceCreationJob < ApplicationJob
     items = batch.resolved_items
 
     ApplicationRecord.transaction do
-      ApplicationRecord.connection.execute(
-        ApplicationRecord.sanitize_sql_array(
-          ["SELECT pg_advisory_xact_lock(?, ?)", batch.user_id, batch.sell_point_id]
-        )
+      ApplicationRecord.connection.exec_query(
+        "SELECT pg_advisory_xact_lock($1, $2)",
+        "advisory_lock",
+        [ batch.user_id, batch.sell_point_id ]
       )
 
       number      = ClientInvoice.current_number(batch.user_id, batch.sell_point_id, "C")
