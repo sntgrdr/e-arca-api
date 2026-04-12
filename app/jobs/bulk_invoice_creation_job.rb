@@ -23,7 +23,7 @@ class BulkInvoiceCreationJob < ApplicationJob
     # Fix 1: accumulate errors locally to avoid stale in-memory counter reads
     error_log = []
 
-    clients.find_each do |client|
+    clients.each do |client|
       next if ClientInvoice.exists?(batch_invoice_process_id: batch.id, client_id: client.id)
 
       begin
@@ -43,9 +43,10 @@ class BulkInvoiceCreationJob < ApplicationJob
     end
 
     if error_log.any?
+      batch.reload
       batch.update!(
         status:        :completed,
-        error_message: "#{batch.reload.processed_invoices} creadas, #{batch.reload.failed_invoices} fallidas",
+        error_message: "#{batch.processed_invoices} creadas, #{batch.failed_invoices} fallidas",
         error_details: error_log
       )
     else
@@ -69,7 +70,9 @@ class BulkInvoiceCreationJob < ApplicationJob
 
     ApplicationRecord.transaction do
       ApplicationRecord.connection.execute(
-        "SELECT pg_advisory_xact_lock(#{batch.user_id.to_i}, #{batch.sell_point_id.to_i})"
+        ApplicationRecord.sanitize_sql_array(
+          ["SELECT pg_advisory_xact_lock(?, ?)", batch.user_id, batch.sell_point_id]
+        )
       )
 
       number      = ClientInvoice.current_number(batch.user_id, batch.sell_point_id, "C")
