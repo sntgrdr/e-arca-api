@@ -38,7 +38,8 @@ class BatchInvoiceProcess < ApplicationRecord
   # Returns the clients to invoice.
   # Priority: explicit selection → group → all user's active clients.
   def resolved_clients
-    if selected_clients.loaded? ? selected_clients.any? : batch_invoice_process_clients.exists?
+    has_explicit_clients = selected_clients.loaded? ? selected_clients.any? : batch_invoice_process_clients.exists?
+    if has_explicit_clients
       selected_clients
     elsif client_group_id?
       client_group.clients.where(active: true)
