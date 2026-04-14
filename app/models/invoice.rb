@@ -21,7 +21,7 @@ class Invoice < ApplicationRecord
 
   validates :number, :date, presence: true
   validates :number, uniqueness: {
-    scope:     [ :user_id, :type, :sell_point_id ],
+    scope:     [ :user_id, :type, :sell_point_id, :invoice_type ],
     allow_nil: true
   }
   validates :number, numericality: { greater_than: 0 }

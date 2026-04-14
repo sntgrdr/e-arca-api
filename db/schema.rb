@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_13_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_14_172437) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -143,7 +143,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_13_000002) do
     t.index ["client_id"], name: "index_invoices_on_client_id"
     t.index ["client_invoice_id"], name: "index_invoices_on_client_invoice_id"
     t.index ["discarded_at"], name: "index_invoices_on_discarded_at"
-    t.index ["sell_point_id", "type", "number"], name: "idx_unique_sellpoint_type_number", unique: true
+    t.index ["sell_point_id", "type", "invoice_type", "number"], name: "idx_unique_sellpoint_type_invoice_type_number", unique: true, where: "((discarded_at IS NULL) OR (cae IS NOT NULL))"
     t.index ["sell_point_id"], name: "index_invoices_on_sell_point_id"
     t.index ["user_id", "client_id"], name: "index_invoices_on_user_id_and_client_id"
     t.index ["user_id", "type", "created_at"], name: "index_invoices_on_user_id_type_created_at"
