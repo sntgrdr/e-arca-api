@@ -131,6 +131,8 @@ es:
       created: "Cliente creado exitosamente."
       updated: "Cliente actualizado exitosamente."
       destroyed: "Cliente eliminado correctamente."
+    errors:
+      cannot_deactivate_final_client: "No se puede desactivar el cliente predeterminado."
 
   # ── Client Invoices ───────────────────────────────────────────
   client_invoices:
@@ -185,6 +187,10 @@ es:
       destroyed: "Nota de crédito eliminada correctamente."
       already_sent: "La nota de crédito ya fue informada a ARCA"
       sent_success: "Nota de crédito exitosamente informada a ARCA."
+    errors:
+      cannot_edit_authorized: "No se puede editar una nota de crédito ya enviada a ARCA."
+      cannot_delete_authorized: "No se puede eliminar una nota de crédito ya enviada a ARCA."
+      invoice_fully_credited: "La factura ya fue acreditada en su totalidad."
 
   # ── Items ─────────────────────────────────────────────────────
   items:
@@ -314,6 +320,35 @@ es:
     afip:
       malformed_response: "Respuesta AFIP malformada: %{xml}"
       unknown_error: "Error desconocido en respuesta AFIP"
+
+  # ── ActiveRecord model error messages ────────────────────────
+  activerecord:
+    errors:
+      models:
+        invoice:
+          attributes:
+            lines:
+              too_short: "debe tener al menos una línea"
+            invoice_type:
+              inclusion: "no es un tipo de comprobante válido"
+            total_price:
+              greater_than: "debe ser mayor a 0"
+        credit_note:
+          attributes:
+            client_invoice:
+              not_authorized: "debe estar autorizada por ARCA (debe tener CAE)"
+              not_owned: "no pertenece a este usuario"
+            sell_point:
+              mismatch: "debe coincidir con el de la factura original"
+            invoice_type:
+              mismatch: "debe coincidir con el de la factura original"
+            period:
+              mismatch: "debe coincidir con el de la factura original"
+            lines:
+              item_not_in_invoice: "el producto '%{description}' no fue facturado en la factura original"
+              quantity_exceeded: "'%{description}': cantidad %{quantity} supera el disponible (%{available})"
+            total_price:
+              exceeds_available: "supera el saldo disponible de la factura (%{remaining})"
 
   # ── JavaScript ────────────────────────────────────────────────
   js:
