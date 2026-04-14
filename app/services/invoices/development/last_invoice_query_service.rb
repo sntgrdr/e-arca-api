@@ -1,7 +1,7 @@
 module Invoices
   module Development
     class LastInvoiceQueryService
-      VALID_AFIP_CODES = %w[1 6 11 19].freeze
+      VALID_AFIP_CODES = %w[1 6 11 19 3 8 13].freeze
 
       def initialize(sell_point_number:, afip_code:, user:)
         @sell_point_number = sell_point_number

@@ -15,7 +15,7 @@ module Invoices
     end
 
     def call
-      raise ArgumentError, "La factura debe tener CAE para generar el PDF" unless @invoice.cae.present?
+      raise ArgumentError, "El comprobante debe tener CAE para generar el PDF" unless @invoice.cae.present?
 
       pdf = Prawn::Document.new(page_size: "A4", margin: 30)
       render_header(pdf)
@@ -59,7 +59,7 @@ module Invoices
       # Right side — invoice metadata
       right_x = pdf.bounds.width / 2 + 20
       pdf.bounding_box([ right_x, top - 50 ], width: pdf.bounds.width / 2 - 20) do
-        pdf.text "Factura #{@invoice.invoice_type}", size: FONT_SIZE_LARGE, style: :bold, align: :right
+        pdf.text "#{document_label} #{@invoice.invoice_type}", size: FONT_SIZE_LARGE, style: :bold, align: :right
         pdf.move_down 4
         pdf.text "N°: #{@invoice.sell_point.number.to_s.rjust(4, '0')}-#{@invoice.number.to_s.rjust(8, '0')}", size: FONT_SIZE_NORMAL, align: :right
         pdf.text "Fecha: #{@invoice.date.strftime('%d/%m/%Y')}", size: FONT_SIZE_NORMAL, align: :right
@@ -160,6 +160,10 @@ module Invoices
 
       encoded = Base64.strict_encode64(data.to_json)
       "https://www.afip.gob.ar/fe/qr/?p=#{encoded}"
+    end
+
+    def document_label
+      @invoice.is_a?(CreditNote) ? "Nota de Crédito" : "Factura"
     end
 
     def format_currency(amount)

@@ -60,6 +60,75 @@ RSpec.describe 'Api::V1::ClientInvoices', type: :request do
     end
   end
 
+  describe 'GET /api/v1/client_invoices/:id' do
+    context 'when invoice has no CAE' do
+      let(:invoice) { create(:client_invoice, user: user, client: client, sell_point: sell_point) }
+
+      it 'returns can_edit: true' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        expect(response).to have_http_status(:ok)
+        expect(JSON.parse(response.body)['can_edit']).to eq(true)
+      end
+
+      it 'returns can_send_to_arca: true' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        expect(JSON.parse(response.body)['can_send_to_arca']).to eq(true)
+      end
+
+      it 'returns can_create_credit_note: false' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        expect(JSON.parse(response.body)['can_create_credit_note']).to eq(false)
+      end
+
+      it 'returns credit_notes as empty array' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        expect(JSON.parse(response.body)['credit_notes']).to eq([])
+      end
+    end
+
+    context 'when invoice has a CAE (authorized)' do
+      let(:invoice) { create(:client_invoice, :with_cae, user: user, client: client, sell_point: sell_point) }
+
+      it 'returns can_edit: false' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        expect(JSON.parse(response.body)['can_edit']).to eq(false)
+      end
+
+      it 'returns can_send_to_arca: false' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        expect(JSON.parse(response.body)['can_send_to_arca']).to eq(false)
+      end
+
+      it 'returns can_create_credit_note: true' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        expect(JSON.parse(response.body)['can_create_credit_note']).to eq(true)
+      end
+
+      context 'with associated credit notes' do
+        before { create(:credit_note, user: user, client: client, sell_point: sell_point, client_invoice: invoice) }
+
+        it 'returns credit_notes array with data' do
+          get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+          body = JSON.parse(response.body)
+          expect(body['credit_notes'].length).to eq(1)
+          expect(body['credit_notes'].first).to include('id', 'number', 'date', 'total_price', 'cae')
+        end
+      end
+    end
+
+    context 'with sell_point, client and lines' do
+      let(:invoice) { create(:client_invoice, :with_lines, user: user, client: client, sell_point: sell_point) }
+
+      it 'returns sell_point, client and lines' do
+        get "/api/v1/client_invoices/#{invoice.id}", headers: headers, as: :json
+        body = JSON.parse(response.body)
+        expect(body['sell_point']).to include('id', 'number')
+        expect(body['client']).to include('id', 'legal_name', 'legal_number', 'tax_condition')
+        expect(body['lines']).to be_an(Array)
+      end
+    end
+  end
+
   describe 'GET /api/v1/client_invoices/:id/download_pdf' do
     let(:invoice) { create(:client_invoice, user: user, client: client, sell_point: sell_point, cae: nil) }
 

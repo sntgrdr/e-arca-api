@@ -5,6 +5,8 @@ class User < ApplicationRecord
 
   enum :tax_condition, ::Constants::Arca::TAX_CONDITIONS.symbolize_keys
 
+  after_create_commit :provision_default_resources
+
   before_validation :sanitize_legal_number
 
   validates :password, length: { minimum: 8 }, if: -> { password.present? }
@@ -18,6 +20,10 @@ class User < ApplicationRecord
   validate :dni_matches_legal_number, if: -> { dni.present? && legal_number.present? }
 
   private
+
+  def provision_default_resources
+    ProvisionDefaultUserResourcesJob.perform_later(id)
+  end
 
   def password_complexity
     return if password.match?(/[A-Z]/) && password.match?(/[\-._]/)

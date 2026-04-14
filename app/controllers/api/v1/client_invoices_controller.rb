@@ -4,7 +4,9 @@ module Api
       before_action :set_invoice, only: %i[show update destroy send_to_arca download_pdf history]
 
       def index
-        base_scope = policy_scope(ClientInvoice).order(created_at: :desc)
+        base_scope = policy_scope(ClientInvoice)
+          .includes(:sell_point, :credit_notes, client: [ :client_group, :iva ], lines: :iva)
+          .order(created_at: :desc)
         filtered = ::Filters::ClientInvoicesFilterService.new(params, base_scope).call
         result = paginate(filtered)
         render json: result[:data], meta: result[:pagination], each_serializer: ClientInvoiceSerializer
@@ -12,7 +14,7 @@ module Api
 
       def show
         authorize @client_invoice
-        render json: @client_invoice, serializer: ClientInvoiceSerializer
+        render json: @client_invoice, serializer: ClientInvoiceDetailSerializer
       end
 
       def next_number
@@ -60,7 +62,7 @@ module Api
           }, status: :unprocessable_entity
         end
 
-        @client_invoice.discard!
+        @client_invoice.destroy!
         head :no_content
       end
 
@@ -117,7 +119,8 @@ module Api
 
       def set_invoice
         @client_invoice = ClientInvoice
-          .includes(:client, :sell_point, lines: :iva)
+          .kept
+          .includes(:client, :sell_point, :credit_notes, lines: :iva)
           .where(user_id: current_user.id)
           .find(params[:id])
       end

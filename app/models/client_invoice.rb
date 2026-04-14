@@ -9,8 +9,6 @@ class ClientInvoice < Invoice
            foreign_key: :client_invoice_id,
            dependent: :nullify
 
-  validates :total_price, numericality: { greater_than: 0 }
-
   def afip_code
     case invoice_type
     when "A", "EA" then "1"

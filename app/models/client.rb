@@ -9,6 +9,7 @@ class Client < ApplicationRecord
 
   validates :legal_name, :legal_number, :tax_condition, presence: true
   validates :legal_name, :legal_number, uniqueness: { scope: :user_id, allow_nil: true }
+  validates :final_client, uniqueness: { scope: :user_id }, if: -> { self[:final_client] }
 
   enum :tax_condition, ::Constants::Arca::TAX_CONDITIONS
 

@@ -5,8 +5,9 @@ class ClientInvoiceSerializer < ActiveModel::Serializer
 
   belongs_to :client
   belongs_to :sell_point
-  has_many :lines
-  has_many :credit_notes, key: :credit_note_ids do
-    object.credit_notes.pluck(:id)
+  has_many :lines, each_serializer: LineSerializer
+
+  attribute :credit_note_ids do
+    object.credit_notes.map(&:id)
   end
 end

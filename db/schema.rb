@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_12_042058) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_14_172437) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -99,6 +99,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_042058) do
     t.bigint "client_group_id"
     t.datetime "created_at", null: false
     t.string "dni"
+    t.boolean "final_client", default: false, null: false
     t.bigint "iva_id"
     t.string "legal_name", default: "", null: false
     t.string "legal_number", default: "", null: false
@@ -109,6 +110,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_042058) do
     t.index ["client_group_id"], name: "index_clients_on_client_group_id"
     t.index ["iva_id"], name: "index_clients_on_iva_id"
     t.index ["user_id", "active"], name: "index_clients_on_user_id_and_active"
+    t.index ["user_id", "final_client"], name: "index_clients_on_user_id_final_client_unique", unique: true, where: "(final_client = true)"
     t.index ["user_id", "legal_name"], name: "index_clients_on_user_id_and_legal_name"
     t.index ["user_id"], name: "index_clients_on_user_id"
   end
@@ -141,7 +143,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_12_042058) do
     t.index ["client_id"], name: "index_invoices_on_client_id"
     t.index ["client_invoice_id"], name: "index_invoices_on_client_invoice_id"
     t.index ["discarded_at"], name: "index_invoices_on_discarded_at"
-    t.index ["sell_point_id", "type", "number"], name: "idx_unique_sellpoint_type_number", unique: true
+    t.index ["sell_point_id", "type", "invoice_type", "number"], name: "idx_unique_sellpoint_type_invoice_type_number", unique: true, where: "((discarded_at IS NULL) OR (cae IS NOT NULL))"
     t.index ["sell_point_id"], name: "index_invoices_on_sell_point_id"
     t.index ["user_id", "client_id"], name: "index_invoices_on_user_id_and_client_id"
     t.index ["user_id", "type", "created_at"], name: "index_invoices_on_user_id_type_created_at"
