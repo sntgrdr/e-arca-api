@@ -71,6 +71,22 @@ RSpec.describe Invoices::PdfGeneratorService, type: :service do
       end
     end
 
+    context 'with a credit note' do
+      let(:parent_invoice) { create(:client_invoice, :with_cae, user: user, client: client, sell_point: sell_point) }
+      let(:credit_note) { create(:credit_note, :with_cae, user: user, client_invoice: parent_invoice) }
+
+      subject(:cn_service) { described_class.new(invoice: credit_note) }
+
+      it 'generates a valid PDF binary' do
+        pdf = cn_service.call
+        expect(pdf[0..3]).to eq('%PDF')
+      end
+
+      it 'does not raise errors' do
+        expect { cn_service.call }.not_to raise_error
+      end
+    end
+
     context 'with multiple lines' do
       before do
         create(:line, lineable: invoice, user: user, item: item, iva: iva,

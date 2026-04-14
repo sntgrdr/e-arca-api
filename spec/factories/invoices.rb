@@ -88,6 +88,15 @@ FactoryBot.define do
       end
     end
 
+    trait :with_cae do
+      cae { '12345678901234' }
+      cae_expiration { 10.days.from_now.to_date }
+      afip_invoice_number { '1' }
+      afip_result { 'A' }
+      afip_authorized_at { Time.current }
+      afip_status { :authorized }
+    end
+
     trait :with_lines do
       after(:build) do |credit_note|
         iva  = create(:iva, user: credit_note.user)
