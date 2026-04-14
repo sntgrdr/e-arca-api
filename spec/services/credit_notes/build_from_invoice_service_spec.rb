@@ -147,6 +147,65 @@ RSpec.describe CreditNotes::BuildFromInvoiceService, type: :service do
     end
   end
 
+  describe 'IVA-aware unit_price — net price preserved under partial credit' do
+    # Invoice: qty=1, unit_price=41_322.31 (net), final_price=50_000 (gross, IVA 21%)
+    # When no prior CNs the service must return unit_price=41_322.31, NOT 50_000.
+    # When a prior CN of 25_000 exists the remaining unit_price must be
+    # proportionally scaled: 41_322.31 * (25_000 / 50_000) = 20_661.155 (net).
+    let(:invoice) do
+      inv = ClientInvoice.new(
+        user: user, client: client, sell_point: sell_point,
+        number: '3', date: Date.current, period: Date.current,
+        invoice_type: 'C', total_price: BigDecimal("50000.00"),
+        afip_status: :authorized, cae: '11111111111111',
+        cae_expiration: 10.days.from_now.to_date,
+        afip_invoice_number: '3', afip_result: 'A',
+        afip_authorized_at: Time.current
+      )
+      inv.lines.build(user: user, item: item_a, iva: iva,
+                      description: 'Servicio', quantity: 1,
+                      unit_price: BigDecimal("41322.31"), final_price: BigDecimal("50000.00"))
+      inv.save!
+      inv
+    end
+
+    it 'returns the original net unit_price when no prior credit notes exist' do
+      line = result.lines.first
+      expect(line.unit_price).to eq(BigDecimal("41322.31"))
+    end
+
+    it 'returns final_price equal to invoice final_price when no prior credit notes' do
+      line = result.lines.first
+      expect(line.final_price).to eq(BigDecimal("50000.00"))
+    end
+
+    context 'when a prior credit note of 25,000 exists' do
+      before do
+        cn = CreditNote.new(
+          user: user, client: client, sell_point: sell_point,
+          client_invoice: invoice, number: '1', date: Date.current,
+          period: invoice.period, invoice_type: invoice.invoice_type,
+          total_price: 25_000, afip_status: :draft
+        )
+        cn.lines.build(user: user, item: item_a, iva: iva,
+                       description: 'Servicio', quantity: 1,
+                       unit_price: BigDecimal("20661.155"), final_price: BigDecimal("25000.00"))
+        cn.save!
+      end
+
+      it 'scales unit_price proportionally (not final_price / qty)' do
+        line = result.lines.first
+        # ratio = 25000 / 50000 = 0.5  →  41322.31 * 0.5 = 20661.155
+        expect(line.unit_price).to eq(BigDecimal("20661.155"))
+      end
+
+      it 'keeps remaining final_price correct' do
+        line = result.lines.first
+        expect(line.final_price).to eq(BigDecimal("25000.0"))
+      end
+    end
+  end
+
   describe 'BigDecimal precision — non-divisible unit_price' do
     # Invoice: 1 line, qty=3, final_price=10.0000
     # Remaining: 10.0000 / 3 = 3.3333... → should round to 4dp without float drift

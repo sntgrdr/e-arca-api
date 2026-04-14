@@ -89,8 +89,10 @@ module CreditNotes
         remaining     = invoice_final - credited
         next if remaining <= 0
 
-        qty              = BigDecimal(line.quantity.to_s)
-        remaining_unit   = qty > 0 ? (remaining / qty).round(4, BigDecimal::ROUND_HALF_UP) : BigDecimal(line.unit_price.to_s)
+        # Scale net unit_price proportionally — do NOT divide final_price (gross)
+        # by quantity, which would return a gross figure and ignore IVA.
+        ratio          = invoice_final > 0 ? remaining / invoice_final : BigDecimal("1")
+        remaining_unit = (BigDecimal(line.unit_price.to_s) * ratio).round(4, BigDecimal::ROUND_HALF_UP)
 
         {
           item_id:     line.item_id,
