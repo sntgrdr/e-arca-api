@@ -60,6 +60,13 @@ module Invoices
         cab = doc.at_xpath("//FeCabResp")
         det = doc.at_xpath("//FECAEDetResponse")
 
+        if cab.nil? || det.nil?
+          Rails.logger.error("[SendToArcaService] invoice_id=#{invoice.id} unexpected AFIP response structure. XML: #{xml.truncate(2000)}")
+          error_msg = extract_afip_error(doc).presence || I18n.t("services.afip.malformed_response", xml: xml.truncate(500))
+          persist_error!(xml, error_msg)
+          return { success: false, errors: error_msg }
+        end
+
         resultado = cab.at_xpath("Resultado")&.content
         cae = det.at_xpath("CAE")&.content.presence
 

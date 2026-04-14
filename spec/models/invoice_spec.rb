@@ -14,7 +14,7 @@ RSpec.describe Invoice, type: :model do
     let(:client) { create(:client, user: user) }
 
     it 'returns next number as string' do
-      create(:client_invoice, user: user, sell_point: sell_point, client: client, number: '5', invoice_type: 'C')
+      create(:client_invoice, :with_lines, user: user, sell_point: sell_point, client: client, number: '5', invoice_type: 'C')
       expect(ClientInvoice.current_number(user.id, sell_point.id, 'C')).to eq('6')
     end
 

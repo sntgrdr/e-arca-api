@@ -1,7 +1,7 @@
 module Api
   module V1
     class CreditNotesController < BaseController
-      before_action :set_credit_note, only: %i[show update destroy send_to_arca]
+      before_action :set_credit_note, only: %i[show update destroy send_to_arca download_pdf]
 
       def index
         credit_notes = policy_scope(CreditNote)
@@ -87,6 +87,19 @@ module Api
 
         @credit_note.destroy!
         head :no_content
+      end
+
+      def download_pdf
+        authorize @credit_note
+
+        if @credit_note.cae.blank?
+          return render json: { errors: [ "La nota de crédito no tiene CAE. No se puede generar el PDF." ] }, status: :unprocessable_entity
+        end
+
+        pdf = Invoices::PdfGeneratorService.new(invoice: @credit_note).call
+        filename = "nota_credito_#{@credit_note.invoice_type}_#{@credit_note.number}.pdf"
+
+        send_data pdf, filename: filename, type: "application/pdf", disposition: "inline"
       end
 
       def send_to_arca

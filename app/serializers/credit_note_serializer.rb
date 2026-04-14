@@ -7,7 +7,7 @@ class CreditNoteSerializer < ActiveModel::Serializer
 
   belongs_to :client
   belongs_to :sell_point
-  has_many :lines
+  has_many :lines, each_serializer: LineSerializer
 
   def can_edit
     object.cae.blank?
@@ -30,7 +30,9 @@ class CreditNoteSerializer < ActiveModel::Serializer
 
   def remaining_balance
     return nil unless object.client_invoice
-    already_credited = object.client_invoice.credit_notes.undiscarded.sum(:total_price)
+    scope = object.client_invoice.credit_notes.undiscarded
+    scope = scope.where.not(id: object.id) if object.persisted?
+    already_credited = scope.sum(:total_price)
     (object.client_invoice.total_price - already_credited).to_f
   end
 end

@@ -106,7 +106,7 @@ RSpec.describe 'Multi-tenancy enforcement', type: :request do
       let(:iva_a) { create(:iva, user: user_a) }
       let(:client_a) { create(:client, user: user_a, iva: iva_a) }
       let(:sell_point_a) { create(:sell_point, user: user_a) }
-      let(:invoice_a) { create(:client_invoice, user: user_a, client: client_a, sell_point: sell_point_a) }
+      let(:invoice_a) { create(:client_invoice, :with_cae, user: user_a, client: client_a, sell_point: sell_point_a) }
       let(:resource_path) { '/api/v1/credit_notes' }
       let(:resource) { create(:credit_note, user: user_a, client: client_a, sell_point: sell_point_a, client_invoice: invoice_a) }
       let(:resource_list) { create_list(:credit_note, 2, user: user_a, client: client_a, sell_point: sell_point_a, client_invoice: invoice_a) }
@@ -117,7 +117,7 @@ RSpec.describe 'Multi-tenancy enforcement', type: :request do
         let(:iva_a) { create(:iva, user: user_a) }
         let(:client_a) { create(:client, user: user_a, iva: iva_a) }
         let(:sell_point_a) { create(:sell_point, user: user_a) }
-        let(:invoice_a) { create(:client_invoice, user: user_a, client: client_a, sell_point: sell_point_a) }
+        let(:invoice_a) { create(:client_invoice, :with_cae, user: user_a, client: client_a, sell_point: sell_point_a) }
         let(:resource_path) { '/api/v1/credit_notes' }
         let(:resource) { create(:credit_note, user: user_a, client: client_a, sell_point: sell_point_a, client_invoice: invoice_a) }
         let(:action_name) { 'send_to_arca' }

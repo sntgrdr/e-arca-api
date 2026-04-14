@@ -45,7 +45,7 @@ RSpec.describe CreditNotes::BuildFromInvoiceService, type: :service do
 
     it 'preserves original quantities' do
       lines = result.lines
-      expect(lines.map(&:quantity).map(&:to_f)).to eq([1.0, 1.0])
+      expect(lines.map(&:quantity).map(&:to_f)).to eq([ 1.0, 1.0 ])
     end
 
     it 'returns lines at full final_price' do

@@ -19,7 +19,16 @@ Rails.application.routes.draw do
       get "profile/last_invoice", to: "profiles#last_invoice"
 
       # Resources
-      resources :clients
+      resources :clients do
+        member do
+          patch :deactivate
+          patch :reactivate
+        end
+        collection do
+          patch :bulk_deactivate
+          patch :bulk_reactivate
+        end
+      end
       resources :client_groups
       resources :item_groups
       resources :items do
@@ -32,14 +41,20 @@ Rails.application.routes.draw do
         collection { get :next_number }
         member do
           post :send_to_arca
-          get :download_pdf
-          get :history
+          get  :download_pdf
+          get  :history
         end
       end
 
       resources :credit_notes do
-        collection { get :next_number }
-        member { post :send_to_arca }
+        collection do
+          get :next_number
+          get :create_from_invoice
+        end
+        member do
+          post :send_to_arca
+          get  :download_pdf
+        end
       end
 
       resources :batch_invoice_processes, only: [ :index, :create, :show ] do

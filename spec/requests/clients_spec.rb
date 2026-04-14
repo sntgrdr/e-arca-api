@@ -86,6 +86,98 @@ RSpec.describe 'Api::V1::Clients', type: :request do
     end
   end
 
+  describe 'GET /api/v1/clients?status=inactive' do
+    before do
+      create(:client, user: user, iva: iva, active: true)
+      create(:client, user: user, iva: iva, active: false)
+    end
+
+    it 'returns only inactive clients' do
+      get '/api/v1/clients?status=inactive', headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body.length).to eq(1)
+      expect(body.first['active']).to eq(false)
+    end
+
+    it 'returns only active clients by default' do
+      get '/api/v1/clients', headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body.all? { |c| c['active'] == true }).to eq(true)
+    end
+  end
+
+  describe 'PATCH /api/v1/clients/:id/deactivate' do
+    let!(:client) { create(:client, user: user, iva: iva, active: true) }
+
+    it 'deactivates the client' do
+      patch "/api/v1/clients/#{client.id}/deactivate", headers: headers, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)['active']).to eq(false)
+    end
+
+    context 'when client is final_client' do
+      let!(:final) { create(:client, user: user, iva: iva, active: true, final_client: true, legal_number: '11111111111', legal_name: 'Consumidor Final') }
+
+      it 'returns 422' do
+        patch "/api/v1/clients/#{final.id}/deactivate", headers: headers, as: :json
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'PATCH /api/v1/clients/:id/reactivate' do
+    let!(:client) { create(:client, user: user, iva: iva, active: false) }
+
+    it 'reactivates the client' do
+      patch "/api/v1/clients/#{client.id}/reactivate", headers: headers, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)['active']).to eq(true)
+    end
+  end
+
+  describe 'PATCH /api/v1/clients/bulk_deactivate' do
+    let!(:clients) { create_list(:client, 3, user: user, iva: iva, active: true) }
+
+    it 'deactivates all matched clients' do
+      patch '/api/v1/clients/bulk_deactivate',
+            params: { ids: clients.map(&:id) },
+            headers: headers, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)['deactivated']).to eq(3)
+    end
+
+    it 'returns 0 for foreign ids' do
+      other_user = create(:user)
+      other_client = create(:client, user: other_user, iva: create(:iva, user: other_user))
+      patch '/api/v1/clients/bulk_deactivate',
+            params: { ids: [ other_client.id ] },
+            headers: headers, as: :json
+      expect(JSON.parse(response.body)['deactivated']).to eq(0)
+    end
+
+    it 'skips final_client records' do
+      final = create(:client, user: user, iva: iva, active: true, final_client: true,
+                     legal_number: '11111111111', legal_name: 'Consumidor Final')
+      patch '/api/v1/clients/bulk_deactivate',
+            params: { ids: [ final.id ] },
+            headers: headers, as: :json
+      expect(JSON.parse(response.body)['deactivated']).to eq(0)
+      expect(final.reload.active).to eq(true)
+    end
+  end
+
+  describe 'PATCH /api/v1/clients/bulk_reactivate' do
+    let!(:clients) { create_list(:client, 2, user: user, iva: iva, active: false) }
+
+    it 'reactivates all matched clients' do
+      patch '/api/v1/clients/bulk_reactivate',
+            params: { ids: clients.map(&:id) },
+            headers: headers, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(JSON.parse(response.body)['reactivated']).to eq(2)
+    end
+  end
+
   describe 'DELETE /api/v1/clients/:id' do
     let!(:client) { create(:client, user: user, iva: iva) }
 
@@ -95,6 +187,24 @@ RSpec.describe 'Api::V1::Clients', type: :request do
       }.to change(Client, :count).by(-1)
 
       expect(response).to have_http_status(:no_content)
+    end
+
+    context 'when client is final_client' do
+      let!(:final) { create(:client, user: user, iva: iva, final_client: true,
+                            legal_number: '11111111111', legal_name: 'Consumidor Final') }
+
+      it 'returns 403' do
+        delete "/api/v1/clients/#{final.id}", headers: headers, as: :json
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe 'final_client flag in response' do
+    it 'returns final_client in client serializer' do
+      client = create(:client, user: user, iva: iva)
+      get "/api/v1/clients/#{client.id}", headers: headers, as: :json
+      expect(JSON.parse(response.body)).to have_key('final_client')
     end
   end
 end
