@@ -10,8 +10,8 @@ class BulkInvoiceCreationJob < ApplicationJob
 
   def perform(batch_invoice_process_id)
     batch = BatchInvoiceProcess
-      .includes(:batch_invoice_process_items, :batch_items,
-                :batch_invoice_process_clients, :selected_clients)
+      .includes(batch_invoice_process_items: :item,
+                batch_invoice_process_clients: :client)
       .find(batch_invoice_process_id)
 
     batch.processor.run

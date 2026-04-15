@@ -58,6 +58,6 @@ class BatchInvoiceProcessDetailSerializer < ActiveModel::Serializer
   end
 
   def client_name
-    object.client_invoices.first&.client&.legal_name
+    object.client_invoices.includes(:client).order(created_at: :asc).first&.client&.legal_name
   end
 end
