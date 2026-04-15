@@ -46,7 +46,7 @@ module Api
       end
 
       def client_group_params
-        params.require(:client_group).permit(:name, :active)
+        params.require(:client_group).permit(:name, :active, :details)
       end
     end
   end

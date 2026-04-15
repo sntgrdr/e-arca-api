@@ -20,7 +20,7 @@ RSpec.describe ProvisionDefaultUserResourcesJob, type: :job do
       described_class.perform_now(user.id)
       client = Client.find_by(user: user, final_client: true)
       expect(client.legal_name).to eq('Consumidor Final')
-      expect(client.legal_number).to eq('11111111111')
+      expect(client.legal_number).to eq('0')
       expect(client.iva_id).to be_nil
       expect(client.active).to eq(true)
       expect(client.tax_condition).to eq('final_client')

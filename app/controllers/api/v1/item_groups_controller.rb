@@ -46,7 +46,7 @@ module Api
       end
 
       def item_group_params
-        params.require(:item_group).permit(:name, :active)
+        params.require(:item_group).permit(:name, :active, :details)
       end
     end
   end

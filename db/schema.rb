@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_14_172437) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_14_190002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -70,10 +70,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_14_172437) do
     t.jsonb "error_details", default: []
     t.text "error_message"
     t.integer "failed_invoices", default: 0, null: false
-    t.bigint "item_id", null: false
+    t.string "invoice_type"
+    t.bigint "item_id"
     t.boolean "pdf_generated", default: false, null: false
     t.date "period", null: false
+    t.string "process_type", default: "per_client", null: false
     t.integer "processed_invoices", default: 0, null: false
+    t.integer "quantity"
     t.bigint "sell_point_id", null: false
     t.string "status", default: "pending", null: false
     t.integer "total_invoices", default: 0, null: false
@@ -88,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_14_172437) do
   create_table "client_groups", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
+    t.text "details"
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -154,6 +158,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_14_172437) do
   create_table "item_groups", force: :cascade do |t|
     t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
+    t.text "details"
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false

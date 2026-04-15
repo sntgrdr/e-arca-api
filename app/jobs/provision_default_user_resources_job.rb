@@ -17,7 +17,7 @@ class ProvisionDefaultUserResourcesJob < ApplicationJob
       client_group_id: nil,
       iva_id:          nil,
       legal_name:      "Consumidor Final",
-      legal_number:    "11111111111",
+      legal_number:    "0",
       name:            "Consumidor Final",
       final_client:    true,
       tax_condition:   :final_client,
