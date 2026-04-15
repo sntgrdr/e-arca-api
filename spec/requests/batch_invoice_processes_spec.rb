@@ -324,4 +324,182 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
       end
     end
   end
+
+  # ── Final Consumer batch ────────────────────────────────────────────────────
+
+  describe 'POST /api/v1/batch_invoice_processes (final_consumer)' do
+    context 'with valid params' do
+      it 'creates the batch and returns 201' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               process_type:  'final_consumer',
+               sell_point_id: sell_point.id,
+               date:          Date.current.iso8601,
+               period:        '04/2026',
+               quantity:      5,
+               item_ids:      [ item.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:created)
+        body = JSON.parse(response.body)
+        expect(body['process_type']).to eq('final_consumer')
+        expect(body['quantity']).to eq(5)
+      end
+
+      it 'defaults invoice_type to C for self_employed user' do
+        self_employed_user    = create(:user, tax_condition: :self_employed)
+        self_employed_headers = auth_headers(self_employed_user)
+        self_employed_sp      = create(:sell_point, user: self_employed_user)
+        self_employed_iva     = create(:iva, user: self_employed_user)
+        self_employed_item    = create(:item, user: self_employed_user, iva: self_employed_iva)
+
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               process_type:  'final_consumer',
+               sell_point_id: self_employed_sp.id,
+               date:          Date.current.iso8601,
+               period:        '04/2026',
+               quantity:      3,
+               item_ids:      [ self_employed_item.id ]
+             } },
+             headers: self_employed_headers, as: :json
+
+        expect(JSON.parse(response.body)['invoice_type']).to eq('C')
+      end
+
+      it 'accepts an explicit invoice_type' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               process_type:  'final_consumer',
+               sell_point_id: sell_point.id,
+               date:          Date.current.iso8601,
+               period:        '04/2026',
+               quantity:      3,
+               invoice_type:  'B',
+               item_ids:      [ item.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(JSON.parse(response.body)['invoice_type']).to eq('B')
+      end
+    end
+
+    context 'validations' do
+      it 'rejects quantity of 0' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               process_type:  'final_consumer',
+               sell_point_id: sell_point.id,
+               date:          Date.current.iso8601,
+               period:        '04/2026',
+               quantity:      0,
+               item_ids:      [ item.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'rejects quantity above 200' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               process_type:  'final_consumer',
+               sell_point_id: sell_point.id,
+               date:          Date.current.iso8601,
+               period:        '04/2026',
+               quantity:      201,
+               item_ids:      [ item.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'rejects empty item_ids' do
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               process_type:  'final_consumer',
+               sell_point_id: sell_point.id,
+               date:          Date.current.iso8601,
+               period:        '04/2026',
+               quantity:      5,
+               item_ids:      []
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'rejects item_ids belonging to another user' do
+        other_user = create(:user)
+        other_iva  = create(:iva, user: other_user)
+        other_item = create(:item, user: other_user, iva: other_iva)
+
+        post '/api/v1/batch_invoice_processes',
+             params: { batch_invoice_process: {
+               process_type:  'final_consumer',
+               sell_point_id: sell_point.id,
+               date:          Date.current.iso8601,
+               period:        '04/2026',
+               quantity:      5,
+               item_ids:      [ other_item.id ]
+             } },
+             headers: headers, as: :json
+
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
+
+  describe 'BatchInvoiceProcessors::FinalConsumer (job execution)' do
+    let(:final_client) do
+      create(:client, user: user, legal_name: 'Consumidor Final',
+             legal_number: '0', tax_condition: :final_client,
+             final_client: true, active: true, iva_id: nil)
+    end
+
+    let(:batch) do
+      b = create(:batch_invoice_process, :final_consumer,
+                 user: user, sell_point: sell_point,
+                 date: Date.current, period: Date.current,
+                 quantity: 3, invoice_type: 'C')
+      create(:batch_invoice_process_item, batch_invoice_process: b, item: item, position: 0)
+      b
+    end
+
+    before { final_client }
+
+    it 'creates quantity invoices for the final consumer client' do
+      expect {
+        BatchInvoiceProcessors::FinalConsumer.new(batch).run
+      }.to change { ClientInvoice.where(client: final_client).count }.by(3)
+    end
+
+    it 'marks the batch as completed' do
+      BatchInvoiceProcessors::FinalConsumer.new(batch).run
+      expect(batch.reload.status).to eq('completed')
+    end
+
+    it 'sets total_invoices to quantity' do
+      BatchInvoiceProcessors::FinalConsumer.new(batch).run
+      expect(batch.reload.total_invoices).to eq(3)
+    end
+
+    it 'raises MissingFinalConsumerClient when no final client exists' do
+      final_client.destroy!
+      expect {
+        BatchInvoiceProcessors::FinalConsumer.new(batch).run
+      }.to raise_error(BatchInvoiceProcessors::FinalConsumer::MissingFinalConsumerClient)
+    end
+
+    context 'idempotency on retry' do
+      it 'skips already-processed invoices and creates only the remaining ones' do
+        batch.update!(processed_invoices: 2)
+        expect {
+          BatchInvoiceProcessors::FinalConsumer.new(batch).run
+        }.to change { ClientInvoice.where(client: final_client).count }.by(1)
+      end
+    end
+  end
 end

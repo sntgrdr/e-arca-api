@@ -5,8 +5,9 @@ module Api
 
       def index
         processes = policy_scope(BatchInvoiceProcess)
-          .includes(:item, :sell_point, :client_group, :batch_items)
+          .includes(:item, :sell_point, :client_group, batch_invoice_process_items: :item)
           .order(created_at: :desc)
+        processes = processes.where(process_type: params[:process_type]) if params[:process_type].present?
         render json: processes, each_serializer: BatchInvoiceProcessSerializer
       end
 
@@ -34,26 +35,13 @@ module Api
       def create
         authorize BatchInvoiceProcess
 
-        item_ids   = Array(params.dig(:batch_invoice_process, :item_ids)).map(&:to_i).uniq
-        client_ids = Array(params.dig(:batch_invoice_process, :client_ids)).map(&:to_i).uniq
+        process_type = params.dig(:batch_invoice_process, :process_type).presence || "per_client"
 
-        errors = validate_selection(item_ids, client_ids)
-        return render_errors(errors) if errors.any?
-
-        build_params = batch_process_params.merge(user_id: current_user.id)
-        build_params[:item_id] = item_ids.first if item_ids.any? && build_params[:item_id].blank?
-        batch = BatchInvoiceProcess.new(build_params)
-
-        ActiveRecord::Base.transaction do
-          batch.save!
-          attach_items(batch, item_ids)
-          attach_clients(batch, client_ids)
+        if process_type == "final_consumer"
+          create_final_consumer
+        else
+          create_per_client
         end
-
-        BulkInvoiceCreationJob.perform_later(batch.id)
-        render json: batch, serializer: BatchInvoiceProcessSerializer, status: :created
-      rescue ActiveRecord::RecordInvalid => e
-        render_errors(e.record.errors.full_messages)
       end
 
       def generate_pdfs
@@ -80,13 +68,77 @@ module Api
 
       private
 
+      def create_per_client
+        item_ids   = Array(params.dig(:batch_invoice_process, :item_ids)).map(&:to_i).uniq
+        client_ids = Array(params.dig(:batch_invoice_process, :client_ids)).map(&:to_i).uniq
+
+        errors = validate_selection(item_ids, client_ids)
+        return render_errors(errors) if errors.any?
+
+        build_params = batch_process_params.merge(user_id: current_user.id, process_type: "per_client")
+        build_params[:item_id] = item_ids.first if item_ids.any? && build_params[:item_id].blank?
+        batch = BatchInvoiceProcess.new(build_params)
+
+        ActiveRecord::Base.transaction do
+          batch.save!
+          attach_items(batch, item_ids)
+          attach_clients(batch, client_ids)
+        end
+
+        BulkInvoiceCreationJob.perform_later(batch.id)
+        render json: batch, serializer: BatchInvoiceProcessSerializer, status: :created
+      rescue ActiveRecord::RecordInvalid => e
+        render_errors(e.record.errors.full_messages)
+      end
+
+      def create_final_consumer
+        item_ids = Array(params.dig(:batch_invoice_process, :item_ids)).map(&:to_i).uniq
+
+        errors = validate_final_consumer_selection(item_ids)
+        return render_errors(errors) if errors.any?
+
+        build_params = batch_process_params.merge(
+          user_id:      current_user.id,
+          process_type: "final_consumer",
+          date:         Date.current,
+          period:       Date.current.beginning_of_month
+        )
+        batch = BatchInvoiceProcess.new(build_params)
+
+        ActiveRecord::Base.transaction do
+          batch.save!
+          attach_items(batch, item_ids)
+        end
+
+        BulkInvoiceCreationJob.perform_later(batch.id)
+        render json: batch, serializer: BatchInvoiceProcessSerializer, status: :created
+      rescue ActiveRecord::RecordInvalid => e
+        render_errors(e.record.errors.full_messages)
+      end
+
+      def validate_final_consumer_selection(item_ids)
+        errors = []
+
+        if item_ids.empty?
+          errors << I18n.t("batch_invoice_processes.errors.item_ids_required")
+        elsif item_ids.size > BatchInvoiceProcess::MAX_ITEMS
+          errors << I18n.t("batch_invoice_processes.errors.too_many_items", max: BatchInvoiceProcess::MAX_ITEMS)
+        else
+          owned = Item.where(user_id: current_user.id, id: item_ids).count
+          errors << I18n.t("batch_invoice_processes.errors.invalid_items") if owned != item_ids.size
+        end
+
+        errors
+      end
+
       def set_batch_process
         @batch_process = BatchInvoiceProcess.where(user_id: current_user.id).find(params[:id])
       end
 
       def batch_process_params
         permitted = params.require(:batch_invoice_process).permit(
-          :client_group_id, :item_id, :sell_point_id, :date, :period
+          :client_group_id, :item_id, :sell_point_id, :date, :period,
+          :invoice_type, :quantity
         )
 
         if permitted[:period].present? && permitted[:period].match?(%r{\A\d{2}/\d{4}\z})

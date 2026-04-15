@@ -1,8 +1,8 @@
 class BatchInvoiceProcessSerializer < ActiveModel::Serializer
-  attributes :id, :status, :date, :period, :total_invoices,
+  attributes :id, :status, :process_type, :date, :period, :total_invoices,
              :processed_invoices, :failed_invoices, :pdf_generated,
              :error_message, :client_group_id, :item_id, :sell_point_id,
-             :created_at, :item, :sell_point, :items, :client_group
+             :invoice_type, :quantity, :created_at, :item, :sell_point, :items, :client_group
 
   def item
     return nil unless object.item

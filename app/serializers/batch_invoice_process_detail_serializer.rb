@@ -1,12 +1,13 @@
 class BatchInvoiceProcessDetailSerializer < ActiveModel::Serializer
   INVOICE_CAP = 200
 
-  attributes :id, :status, :date, :period, :total_invoices,
+  attributes :id, :status, :process_type, :date, :period, :total_invoices,
              :processed_invoices, :failed_invoices, :pdf_generated,
              :error_message, :error_details, :client_group_id, :item_id,
-             :sell_point_id, :sell_point, :client_group, :created_at, :updated_at,
-             :items,
-             :client_invoices, :client_invoices_capped, :client_invoices_total
+             :sell_point_id, :sell_point, :client_group, :invoice_type, :quantity,
+             :created_at, :updated_at, :items,
+             :client_invoices, :client_invoices_capped, :client_invoices_total,
+             :client_name
 
   def sell_point
     return nil unless object.sell_point
@@ -54,5 +55,9 @@ class BatchInvoiceProcessDetailSerializer < ActiveModel::Serializer
     data = super
     data.delete(:error_details) unless object.failed?
     data
+  end
+
+  def client_name
+    object.client_invoices.first&.client&.legal_name
   end
 end

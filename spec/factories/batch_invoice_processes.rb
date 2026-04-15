@@ -7,9 +7,17 @@ FactoryBot.define do
     date               { Date.current }
     period             { Date.current }
     status             { 'pending' }
+    process_type       { 'per_client' }
+    invoice_type       { 'C' }
     processed_invoices { 0 }
     total_invoices     { 0 }
     pdf_generated      { false }
+
+    trait :final_consumer do
+      process_type { 'final_consumer' }
+      item         { nil }
+      quantity     { 5 }
+    end
 
     trait :with_client_group do
       association :client_group
