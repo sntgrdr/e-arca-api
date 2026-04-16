@@ -25,6 +25,7 @@ Rails.application.routes.draw do
           patch :reactivate
         end
         collection do
+          get   :search
           patch :bulk_deactivate
           patch :bulk_reactivate
         end

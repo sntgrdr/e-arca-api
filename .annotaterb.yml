@@ -1,0 +1,17 @@
+# annotaterb configuration
+# Run `bundle exec annotaterb models` to re-annotate manually.
+# Annotations are kept in sync automatically after db:migrate / db:rollback via lib/tasks/annotate_rb.rake.
+
+position_in_class: "before"
+position_in_factory: "before"
+
+show_indexes: true
+simple_indexes: false
+
+exclude_tests: true
+exclude_fixtures: true
+exclude_serializers: true
+exclude_factories: false
+
+hide_limit_column_types: "integer,bigint,boolean"
+hide_default_column_types: ""
