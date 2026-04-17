@@ -90,7 +90,10 @@ RSpec.describe 'Api::V1::CreditNotes', type: :request do
 
       it 'respects the page param' do
         get '/api/v1/credit_notes', params: { page: 2 }, headers: headers
-        expect(JSON.parse(response.body)['meta']['page']).to eq(2)
+        body = JSON.parse(response.body)
+        expect(body['meta']['page']).to eq(2)
+        # 21 total records, 20 per page → page 2 has exactly 1 record
+        expect(body['data'].length).to eq(1)
       end
     end
 
