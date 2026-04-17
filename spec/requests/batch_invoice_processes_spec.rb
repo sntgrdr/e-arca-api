@@ -10,6 +10,38 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
   let(:sell_point) { create(:sell_point, user: user) }
 
   describe 'GET /api/v1/batch_invoice_processes' do
+    let(:sell_point) { create(:sell_point, user: user) }
+
+    before do
+      create_list(:batch_invoice_process, 3, user: user, sell_point: sell_point)
+    end
+
+    it 'returns 200' do
+      get '/api/v1/batch_invoice_processes', headers: headers
+      expect(response).to have_http_status(:ok)
+    end
+
+    it 'wraps records under a data key' do
+      get '/api/v1/batch_invoice_processes', headers: headers
+      body = JSON.parse(response.body)
+      expect(body).to have_key('data')
+      expect(body['data'].length).to eq(3)
+    end
+
+    it 'returns a meta object with pagination fields' do
+      get '/api/v1/batch_invoice_processes', headers: headers
+      meta = JSON.parse(response.body)['meta']
+      expect(meta).to include('count', 'page', 'items', 'pages')
+      expect(meta['count']).to eq(3)
+    end
+
+    it 'filters by process_type' do
+      create(:batch_invoice_process, :final_consumer, user: user, sell_point: sell_point)
+      get '/api/v1/batch_invoice_processes', params: { process_type: 'final_consumer' }, headers: headers
+      body = JSON.parse(response.body)
+      expect(body['meta']['count']).to eq(1)
+    end
+
     context 'without a client_group' do
       before do
         create_list(:batch_invoice_process, 2, user: user, item: item, sell_point: sell_point)
@@ -19,22 +51,22 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
         get '/api/v1/batch_invoice_processes', headers: headers, as: :json
         expect(response).to have_http_status(:ok)
         body = JSON.parse(response.body)
-        expect(body.length).to eq(2)
-        expect(body.first).to include('item', 'sell_point')
-        expect(body.first['item']).to include('id', 'name', 'code')
-        expect(body.first['sell_point']).to include('id', 'number')
+        first = body['data'].first
+        expect(first).to include('item', 'sell_point')
+        expect(first['item']).to include('id', 'name', 'code')
+        expect(first['sell_point']).to include('id', 'number')
       end
 
       it 'returns client_group as null when not set' do
         get '/api/v1/batch_invoice_processes', headers: headers, as: :json
         body = JSON.parse(response.body)
-        expect(body.first['client_group']).to be_nil
+        expect(body['data'].first['client_group']).to be_nil
       end
 
       it 'does not include client_invoices' do
         get '/api/v1/batch_invoice_processes', headers: headers, as: :json
         body = JSON.parse(response.body)
-        expect(body.first).not_to have_key('client_invoices')
+        expect(body['data'].first).not_to have_key('client_invoices')
       end
     end
 
@@ -48,7 +80,8 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
       it 'returns client_group with id and name' do
         get '/api/v1/batch_invoice_processes', headers: headers, as: :json
         body = JSON.parse(response.body)
-        expect(body.first['client_group']).to include('id' => group.id, 'name' => group.name)
+        record = body['data'].find { |b| b['client_group'].present? }
+        expect(record['client_group']).to include('id' => group.id, 'name' => group.name)
       end
     end
   end
@@ -189,7 +222,7 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
       multi_batch
       get '/api/v1/batch_invoice_processes', headers: headers, as: :json
       body = JSON.parse(response.body)
-      batch_body = body.find { |b| b['id'] == multi_batch.id }
+      batch_body = body['data'].find { |b| b['id'] == multi_batch.id }
       expect(batch_body['items'].size).to eq(2)
     end
   end
