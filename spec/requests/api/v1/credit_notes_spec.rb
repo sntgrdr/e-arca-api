@@ -49,17 +49,54 @@ RSpec.describe 'Api::V1::CreditNotes', type: :request do
       expect(response).to have_http_status(:ok)
     end
 
-    it 'returns an array' do
+    it 'wraps records under a data key' do
       get '/api/v1/credit_notes', headers: headers
-      expect(JSON.parse(response.body)).to be_an(Array)
+      body = JSON.parse(response.body)
+      expect(body).to have_key('data')
+      expect(body['data'].length).to eq(1)
     end
 
-    it 'includes expected fields' do
+    it 'returns a meta object with pagination fields' do
       get '/api/v1/credit_notes', headers: headers
-      record = JSON.parse(response.body).first
+      meta = JSON.parse(response.body)['meta']
+      expect(meta).to include('count', 'page', 'items', 'pages')
+      expect(meta['count']).to eq(1)
+    end
+
+    it 'includes expected fields in each record' do
+      get '/api/v1/credit_notes', headers: headers
+      record = JSON.parse(response.body)['data'].first
       expect(record).to include('id', 'number', 'date', 'total_price',
                                 'invoice_type', 'can_edit', 'can_send_to_arca',
                                 'remaining_balance')
+    end
+
+    context 'with multiple pages' do
+      before do
+        # 20 more credit notes → 21 total, page 1 has 20
+        20.times do |i|
+          cn = CreditNote.new(
+            user: user, client: client, sell_point: sell_point,
+            client_invoice: invoice, number: (i + 2).to_s, date: Date.current,
+            period: invoice.period, invoice_type: invoice.invoice_type,
+            total_price: 500, afip_status: :draft
+          )
+          cn.lines.build(user: user, item: item_a, iva: iva,
+                         description: 'Servicio', quantity: 1,
+                         unit_price: 500, final_price: 500)
+          cn.save!
+        end
+      end
+
+      it 'respects the page param' do
+        get '/api/v1/credit_notes', params: { page: 2 }, headers: headers
+        expect(JSON.parse(response.body)['meta']['page']).to eq(2)
+      end
+    end
+
+    it 'returns 404 for an out-of-range page' do
+      get '/api/v1/credit_notes', params: { page: 9999 }, headers: headers
+      expect(response).to have_http_status(:not_found)
     end
 
     it 'returns 401 when unauthenticated' do
