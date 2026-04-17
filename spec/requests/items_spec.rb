@@ -8,10 +8,21 @@ RSpec.describe 'Api::V1::Items', type: :request do
   describe 'GET /api/v1/items' do
     before { create_list(:item, 3, user: user, iva: iva) }
 
-    it 'returns paginated items' do
-      get '/api/v1/items', headers: headers, as: :json
+    it 'returns 200' do
+      get '/api/v1/items', headers: headers
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body).length).to eq(3)
+    end
+
+    it 'wraps records under a data key' do
+      get '/api/v1/items', headers: headers
+      body = JSON.parse(response.body)
+      expect(body['data'].length).to eq(3)
+    end
+
+    it 'returns a meta object with pagination fields' do
+      get '/api/v1/items', headers: headers
+      meta = JSON.parse(response.body)['meta']
+      expect(meta).to include('count', 'page', 'items', 'pages')
     end
   end
 

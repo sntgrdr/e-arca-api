@@ -9,7 +9,7 @@ module Api
           .order(created_at: :desc)
         filtered = ::Filters::ClientInvoicesFilterService.new(params, base_scope).call
         result = paginate(filtered)
-        render json: result[:data], meta: result[:pagination], each_serializer: ClientInvoiceSerializer
+        render_paginated(result, serializer: ClientInvoiceSerializer)
       end
 
       def show

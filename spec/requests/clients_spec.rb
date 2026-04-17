@@ -8,16 +8,43 @@ RSpec.describe 'Api::V1::Clients', type: :request do
   describe 'GET /api/v1/clients' do
     before { create_list(:client, 3, user: user, iva: iva) }
 
-    it 'returns paginated clients' do
-      get '/api/v1/clients', headers: headers, as: :json
+    it 'returns 200' do
+      get '/api/v1/clients', headers: headers
       expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body).length).to eq(3)
+    end
+
+    it 'wraps records under a data key' do
+      get '/api/v1/clients', headers: headers
+      body = JSON.parse(response.body)
+      expect(body).to have_key('data')
+      expect(body['data'].length).to eq(3)
+    end
+
+    it 'returns a meta object with pagination fields' do
+      get '/api/v1/clients', headers: headers
+      meta = JSON.parse(response.body)['meta']
+      expect(meta).to include('count', 'page', 'items', 'pages')
+      expect(meta['page']).to eq(1)
+      expect(meta['count']).to eq(3)
+    end
+
+    it 'respects the page param' do
+      create_list(:client, 20, user: user, iva: iva)  # 23 total
+      get '/api/v1/clients', params: { page: 2 }, headers: headers
+      body = JSON.parse(response.body)
+      expect(body['meta']['page']).to eq(2)
+      expect(body['data'].length).to be > 0
+    end
+
+    it 'returns 404 for an out-of-range page' do
+      get '/api/v1/clients', params: { page: 9999 }, headers: headers
+      expect(response).to have_http_status(:not_found)
     end
 
     it 'returns client_group_name as null when client has no group' do
-      get '/api/v1/clients', headers: headers, as: :json
+      get '/api/v1/clients', headers: headers
       body = JSON.parse(response.body)
-      expect(body.first['client_group_name']).to be_nil
+      expect(body['data'].first['client_group_name']).to be_nil
     end
 
     context 'when client belongs to a group' do
@@ -26,9 +53,9 @@ RSpec.describe 'Api::V1::Clients', type: :request do
       before { create(:client, user: user, iva: iva, client_group: group) }
 
       it 'returns client_group_name' do
-        get '/api/v1/clients', headers: headers, as: :json
+        get '/api/v1/clients', headers: headers
         body = JSON.parse(response.body)
-        client_with_group = body.find { |c| c['client_group_id'] == group.id }
+        client_with_group = body['data'].find { |c| c['client_group_id'] == group.id }
         expect(client_with_group['client_group_name']).to eq(group.name)
       end
     end
@@ -93,16 +120,16 @@ RSpec.describe 'Api::V1::Clients', type: :request do
     end
 
     it 'returns only inactive clients' do
-      get '/api/v1/clients?status=inactive', headers: headers, as: :json
+      get '/api/v1/clients?status=inactive', headers: headers
       body = JSON.parse(response.body)
-      expect(body.length).to eq(1)
-      expect(body.first['active']).to eq(false)
+      expect(body['data'].length).to eq(1)
+      expect(body['data'].first['active']).to eq(false)
     end
 
     it 'returns only active clients by default' do
-      get '/api/v1/clients', headers: headers, as: :json
+      get '/api/v1/clients', headers: headers
       body = JSON.parse(response.body)
-      expect(body.all? { |c| c['active'] == true }).to eq(true)
+      expect(body['data'].all? { |c| c['active'] == true }).to eq(true)
     end
   end
 
