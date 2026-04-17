@@ -4,8 +4,8 @@ module Api
       before_action :set_iva, only: %i[show update destroy]
 
       def index
-        ivas = policy_scope(Iva).active
-        render json: ivas, each_serializer: IvaSerializer
+        result = paginate(policy_scope(Iva).active)
+        render_paginated(result, serializer: IvaSerializer)
       end
 
       def show

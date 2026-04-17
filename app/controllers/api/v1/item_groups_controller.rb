@@ -4,8 +4,8 @@ module Api
       before_action :set_item_group, only: %i[show update destroy]
 
       def index
-        groups = policy_scope(ItemGroup).active
-        render json: groups, each_serializer: ItemGroupSerializer
+        result = paginate(policy_scope(ItemGroup).active)
+        render_paginated(result, serializer: ItemGroupSerializer)
       end
 
       def show
