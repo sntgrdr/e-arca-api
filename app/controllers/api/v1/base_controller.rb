@@ -58,11 +58,13 @@ module Api
       end
 
       def render_paginated(result, serializer:)
-        data = ActiveModelSerializers::SerializableResource.new(
-          result[:data],
-          each_serializer: serializer
-        ).as_json
-        render json: { data: data, meta: result[:pagination] }
+        render json: {
+          data: ActiveModelSerializers::SerializableResource.new(
+            result[:data],
+            each_serializer: serializer
+          ),
+          meta: result[:pagination]
+        }
       end
 
       def arca_service_module

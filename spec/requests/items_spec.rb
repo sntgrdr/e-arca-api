@@ -16,6 +16,7 @@ RSpec.describe 'Api::V1::Items', type: :request do
     it 'wraps records under a data key' do
       get '/api/v1/items', headers: headers
       body = JSON.parse(response.body)
+      expect(body).to have_key('data')
       expect(body['data'].length).to eq(3)
     end
 
@@ -23,6 +24,7 @@ RSpec.describe 'Api::V1::Items', type: :request do
       get '/api/v1/items', headers: headers
       meta = JSON.parse(response.body)['meta']
       expect(meta).to include('count', 'page', 'items', 'pages')
+      expect(meta['count']).to eq(3)
     end
   end
 
