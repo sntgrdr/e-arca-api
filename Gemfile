@@ -38,7 +38,7 @@ gem "nokogiri"
 gem "prawn", "~> 2.5"
 gem "prawn-table", "~> 0.2"
 gem "rqrcode", "~> 2.2"
-gem "rubyzip", "~> 2.3"
+gem "rubyzip", "~> 3.2"
 
 # i18n
 gem "rails-i18n", "~> 8.0"
