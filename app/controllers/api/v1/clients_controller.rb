@@ -62,6 +62,12 @@ module Api
         render json: @client, serializer: ClientSerializer
       end
 
+      def search
+        authorize Client, :search?
+        clients = ClientsSearchQuery.call(q: params[:q], current_user: current_user, client_group_id: params[:client_group_id])
+        render json: clients, each_serializer: ClientSearchSerializer, status: :ok
+      end
+
       def bulk_deactivate
         authorize Client, :bulk_deactivate?
         ids = Array(params[:ids]).map(&:to_i)

@@ -1,4 +1,8 @@
 class ClientPolicy < ApplicationPolicy
+  def search?
+    true
+  end
+
   def deactivate?
     owner?
   end

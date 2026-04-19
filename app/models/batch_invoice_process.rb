@@ -1,4 +1,42 @@
 # app/models/batch_invoice_process.rb
+# == Schema Information
+#
+# Table name: batch_invoice_processes
+#
+#  id                 :bigint           not null, primary key
+#  date               :date             not null
+#  error_details      :jsonb
+#  error_message      :text
+#  failed_invoices    :integer          default(0), not null
+#  invoice_type       :string
+#  pdf_generated      :boolean          default(FALSE), not null
+#  period             :date             not null
+#  process_type       :string           default("per_client"), not null
+#  processed_invoices :integer          default(0), not null
+#  quantity           :integer
+#  status             :string           default("pending"), not null
+#  total_invoices     :integer          default(0), not null
+#  created_at         :datetime         not null
+#  updated_at         :datetime         not null
+#  client_group_id    :bigint
+#  item_id            :bigint
+#  sell_point_id      :bigint           not null
+#  user_id            :bigint           not null
+#
+# Indexes
+#
+#  index_batch_invoice_processes_on_client_group_id  (client_group_id)
+#  index_batch_invoice_processes_on_item_id          (item_id)
+#  index_batch_invoice_processes_on_sell_point_id    (sell_point_id)
+#  index_batch_invoice_processes_on_user_id          (user_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (client_group_id => client_groups.id)
+#  fk_rails_...  (item_id => items.id)
+#  fk_rails_...  (sell_point_id => sell_points.id)
+#  fk_rails_...  (user_id => users.id)
+#
 class BatchInvoiceProcess < ApplicationRecord
   MAX_ITEMS    = 10
   MAX_CLIENTS  = 100

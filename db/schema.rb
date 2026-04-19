@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_14_190002) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_14_190003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "pg_trgm"
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
@@ -113,6 +114,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_14_190002) do
     t.bigint "user_id"
     t.index ["client_group_id"], name: "index_clients_on_client_group_id"
     t.index ["iva_id"], name: "index_clients_on_iva_id"
+    t.index ["legal_name"], name: "index_clients_on_legal_name", opclass: :gin_trgm_ops, using: :gin
+    t.index ["name"], name: "index_clients_on_name", opclass: :gin_trgm_ops, using: :gin
     t.index ["user_id", "active"], name: "index_clients_on_user_id_and_active"
     t.index ["user_id", "final_client"], name: "index_clients_on_user_id_final_client_unique", unique: true, where: "(final_client = true)"
     t.index ["user_id", "legal_name"], name: "index_clients_on_user_id_and_legal_name"
