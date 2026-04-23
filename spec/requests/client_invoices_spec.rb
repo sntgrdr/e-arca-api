@@ -50,6 +50,29 @@ RSpec.describe 'Api::V1::ClientInvoices', type: :request do
       get '/api/v1/client_invoices', as: :json
       expect(response).to have_http_status(:unauthorized)
     end
+
+    context 'filtered by sell_point_id' do
+      let(:other_sell_point) { create(:sell_point, user: user) }
+
+      before do
+        create(:client_invoice, user: user, client: client, sell_point: other_sell_point)
+      end
+
+      it 'returns only invoices for the given sell_point' do
+        get '/api/v1/client_invoices', params: { sell_point_id: sell_point.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['meta']['count']).to eq(3)
+        expect(body['data'].all? { |inv| inv['sell_point']['id'] == sell_point.id }).to be true
+      end
+
+      it 'returns empty when no invoices match the sell_point' do
+        other_sp = create(:sell_point, user: user)
+        get '/api/v1/client_invoices', params: { sell_point_id: other_sp.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data']).to be_empty
+        expect(body['meta']['count']).to eq(0)
+      end
+    end
   end
 
   describe 'GET /api/v1/client_invoices/next_number' do
