@@ -8,7 +8,7 @@ module Api
           .includes(:sell_point, :credit_notes, client: [ :client_group, :iva ], lines: :iva)
           .order(created_at: :desc)
         filtered = ::Filters::ClientInvoicesFilterService.new(params, base_scope).call
-        result = paginate(filtered)
+        result = pagination_result(filtered)
         render_paginated(result, serializer: ClientInvoiceSerializer)
       end
 

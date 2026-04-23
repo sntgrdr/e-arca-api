@@ -7,7 +7,7 @@ module Api
         scope = policy_scope(CreditNote)
           .includes(:client, :sell_point, :client_invoice, lines: :iva)
           .order(date: :desc)
-        result = paginate(scope)
+        result = pagination_result(scope)
         render_paginated(result, serializer: CreditNoteSerializer)
       end
 

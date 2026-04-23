@@ -10,8 +10,6 @@ RSpec.describe 'Api::V1::BatchInvoiceProcesses', type: :request do
   let(:sell_point) { create(:sell_point, user: user) }
 
   describe 'GET /api/v1/batch_invoice_processes' do
-    let(:sell_point) { create(:sell_point, user: user) }
-
     before do
       create_list(:batch_invoice_process, 3, user: user, sell_point: sell_point)
     end

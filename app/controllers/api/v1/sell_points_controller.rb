@@ -4,7 +4,7 @@ module Api
       before_action :set_sell_point, only: %i[show update destroy]
 
       def index
-        result = paginate(policy_scope(SellPoint).active)
+        result = pagination_result(policy_scope(SellPoint).active)
         render_paginated(result, serializer: SellPointSerializer)
       end
 

@@ -8,7 +8,7 @@ module Api
           .includes(:item, :sell_point, :client_group, batch_invoice_process_items: :item)
           .order(created_at: :desc)
         scope = scope.where(process_type: params[:process_type]) if params[:process_type].present?
-        result = paginate(scope)
+        result = pagination_result(scope)
         render_paginated(result, serializer: BatchInvoiceProcessSerializer)
       end
 

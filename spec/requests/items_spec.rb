@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::Items', type: :request do
@@ -25,6 +27,24 @@ RSpec.describe 'Api::V1::Items', type: :request do
       meta = JSON.parse(response.body)['meta']
       expect(meta).to include('count', 'page', 'items', 'pages')
       expect(meta['count']).to eq(3)
+    end
+
+    it 'respects the page param' do
+      create_list(:item, 20, user: user, iva: iva)
+      get '/api/v1/items', params: { page: 2 }, headers: headers
+      body = JSON.parse(response.body)
+      expect(body['meta']['page']).to eq(2)
+      expect(body['data'].length).to be > 0
+    end
+
+    it 'returns 404 for an out-of-range page' do
+      get '/api/v1/items', params: { page: 9999 }, headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns 401 without auth headers' do
+      get '/api/v1/items', as: :json
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 

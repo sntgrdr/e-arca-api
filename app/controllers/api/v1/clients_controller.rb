@@ -11,7 +11,7 @@ module Api
         end
         base_scope = base_scope.includes(:iva, :client_group)
         filtered = ::Filters::ClientsFilterService.new(params, base_scope).call
-        result = paginate(filtered)
+        result = pagination_result(filtered)
         render_paginated(result, serializer: ClientSerializer)
       end
 

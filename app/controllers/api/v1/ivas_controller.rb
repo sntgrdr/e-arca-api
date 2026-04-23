@@ -4,7 +4,7 @@ module Api
       before_action :set_iva, only: %i[show update destroy]
 
       def index
-        result = paginate(policy_scope(Iva).active)
+        result = pagination_result(policy_scope(Iva).active)
         render_paginated(result, serializer: IvaSerializer)
       end
 

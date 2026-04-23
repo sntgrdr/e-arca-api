@@ -44,7 +44,7 @@ module Api
         render json: { errors: Array(messages) }, status: status
       end
 
-      def paginate(collection)
+      def pagination_result(collection)
         pagy, records = pagy(collection)
         {
           data: records,
