@@ -110,6 +110,82 @@ RSpec.describe 'Api::V1::CreditNotes', type: :request do
     end
   end
 
+  # ── Index filtering ───────────────────────────────────────────────────────
+
+  describe 'GET /api/v1/credit_notes — filtering' do
+    let(:other_client)     { create(:client, user: user, iva: iva) }
+    let(:other_sell_point) { create(:sell_point, user: user) }
+
+    before { credit_note } # base record: client + sell_point
+
+    context 'filtered by client_id' do
+      before do
+        cn = CreditNote.new(
+          user: user, client: other_client, sell_point: sell_point,
+          client_invoice: invoice, number: '2', date: Date.current,
+          period: invoice.period, invoice_type: invoice.invoice_type,
+          total_price: 500, afip_status: :draft
+        )
+        cn.lines.build(user: user, item: item_a, iva: iva,
+                       description: 'Servicio', quantity: 1,
+                       unit_price: 500, final_price: 500)
+        cn.save!
+      end
+
+      it 'returns only credit notes for the given client' do
+        get '/api/v1/credit_notes', params: { client_id: client.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['meta']['count']).to eq(1)
+        expect(body['data'].all? { |cn| cn['client']['id'] == client.id }).to be true
+      end
+
+      it 'returns empty when no credit notes match the client' do
+        other_c = create(:client, user: user, iva: iva)
+        get '/api/v1/credit_notes', params: { client_id: other_c.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data']).to be_empty
+        expect(body['meta']['count']).to eq(0)
+      end
+    end
+
+    context 'filtered by sell_point_id' do
+      before do
+        # Credit note sell_point must match its invoice — create a separate invoice
+        other_invoice = ClientInvoice.new(
+          user: user, client: client, sell_point: other_sell_point,
+          number: '99', date: Date.current, period: Date.current,
+          invoice_type: 'C', total_price: 500,
+          afip_status: :authorized, cae: '99999999999999',
+          cae_expiration: 10.days.from_now.to_date,
+          afip_invoice_number: '99', afip_result: 'A',
+          afip_authorized_at: Time.current
+        )
+        other_invoice.lines.build(user: user, item: item_a, iva: iva,
+                                  description: 'Servicio', quantity: 1,
+                                  unit_price: 500, final_price: 500)
+        other_invoice.save!
+
+        cn = CreditNote.new(
+          user: user, client: client, sell_point: other_sell_point,
+          client_invoice: other_invoice, number: '2', date: Date.current,
+          period: other_invoice.period, invoice_type: other_invoice.invoice_type,
+          total_price: 500, afip_status: :draft
+        )
+        cn.lines.build(user: user, item: item_a, iva: iva,
+                       description: 'Servicio', quantity: 1,
+                       unit_price: 500, final_price: 500)
+        cn.save!
+      end
+
+      it 'returns only credit notes for the given sell_point' do
+        get '/api/v1/credit_notes', params: { sell_point_id: sell_point.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['meta']['count']).to eq(1)
+        expect(body['data'].all? { |cn| cn['sell_point']['id'] == sell_point.id }).to be true
+      end
+    end
+  end
+
   # ── Show ──────────────────────────────────────────────────────────────────
 
   describe 'GET /api/v1/credit_notes/:id' do
