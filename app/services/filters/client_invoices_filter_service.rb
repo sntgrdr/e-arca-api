@@ -16,6 +16,7 @@ module Filters
       result = filter_by_total_from(result)
       result = filter_by_total_to(result)
       result = filter_by_sell_point_id(result)
+      result = filter_by_client_id(result)
       result
     rescue StandardError => e
       Rails.logger.error("ClientInvoicesFilterService error: #{e.message}")
@@ -87,6 +88,13 @@ module Filters
       return result if value.blank?
 
       result.where(sell_point_id: value)
+    end
+
+    def filter_by_client_id(result)
+      value = stripped_param(:client_id)
+      return result if value.blank?
+
+      result.where(client_id: value)
     end
 
     def stripped_param(key)
