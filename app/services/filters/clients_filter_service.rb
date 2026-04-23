@@ -7,9 +7,8 @@ module Filters
 
     def call
       result = scope.includes(:client_group)
-      result = filter_by_legal_name(result)
+      result = filter_by_q(result)
       result = filter_by_legal_number(result)
-      result = filter_by_name(result)
       result = filter_by_tax_condition(result)
       result = filter_by_client_group_id(result)
       result
@@ -22,25 +21,24 @@ module Filters
 
     attr_reader :params, :scope
 
-    def filter_by_legal_name(result)
-      value = stripped_param(:legal_name)
+    # Searches both legal_name and commercial name (OR logic)
+    def filter_by_q(result)
+      value = stripped_param(:q)
       return result if value.blank?
 
-      result.where("clients.legal_name ILIKE ?", "%#{sanitize(value)}%")
+      sanitized = sanitize(value)
+      result.where(
+        "clients.legal_name ILIKE ? OR clients.name ILIKE ?",
+        "%#{sanitized}%", "%#{sanitized}%"
+      )
     end
 
+    # Strips dashes from the search term before matching — stored values are already digit-only
     def filter_by_legal_number(result)
-      value = stripped_param(:legal_number)
+      value = stripped_param(:legal_number)&.gsub("-", "")
       return result if value.blank?
 
       result.where("clients.legal_number ILIKE ?", "%#{sanitize(value)}%")
-    end
-
-    def filter_by_name(result)
-      value = stripped_param(:name)
-      return result if value.blank?
-
-      result.where("clients.name ILIKE ?", "%#{sanitize(value)}%")
     end
 
     def filter_by_tax_condition(result)

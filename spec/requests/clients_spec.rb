@@ -63,6 +63,116 @@ RSpec.describe 'Api::V1::Clients', type: :request do
     end
   end
 
+  describe 'GET /api/v1/clients — server-side filtering' do
+    let(:other_user) { create(:user) }
+    let(:other_iva)  { create(:iva, user: other_user) }
+
+    before do
+      create(:client, user: user, iva: iva, legal_name: 'García Hermanos',   name: 'García Hnos',  legal_number: '20304567890', tax_condition: :registered)
+      create(:client, user: user, iva: iva, legal_name: 'López Consultores', name: 'López & Asoc', legal_number: '27123456789', tax_condition: :self_employed)
+      create(:client, user: user, iva: iva, legal_name: 'Unrelated SA',      name: 'Unrelated',    legal_number: '30999999990', tax_condition: :exempt)
+    end
+
+    describe 'q param' do
+      it 'filters by legal_name (case-insensitive partial)' do
+        get '/api/v1/clients', params: { q: 'GARCÍA' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to include('García Hermanos')
+        expect(body['data'].map { |c| c['legal_name'] }).not_to include('López Consultores')
+        expect(body['meta']['count']).to eq(1)
+      end
+
+      it 'filters by commercial name (name field)' do
+        get '/api/v1/clients', params: { q: 'López & Asoc' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to include('López Consultores')
+        expect(body['meta']['count']).to eq(1)
+      end
+
+      it 'returns all when q is blank' do
+        get '/api/v1/clients', params: { q: '' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['meta']['count']).to eq(3)
+      end
+    end
+
+    describe 'legal_number param' do
+      it 'matches partial CUIT (digits only stored)' do
+        get '/api/v1/clients', params: { legal_number: '20304' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to contain_exactly('García Hermanos')
+      end
+
+      it 'normalizes dashes in the search term' do
+        get '/api/v1/clients', params: { legal_number: '20-304-567' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to include('García Hermanos')
+      end
+    end
+
+    describe 'tax_condition param' do
+      it 'returns only clients with matching tax_condition' do
+        get '/api/v1/clients', params: { tax_condition: 'self_employed' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to contain_exactly('López Consultores')
+        expect(body['meta']['count']).to eq(1)
+      end
+
+      it 'returns 422 for an unknown tax_condition value' do
+        get '/api/v1/clients', params: { tax_condition: 'invalid_value' }, headers: headers
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(JSON.parse(response.body).dig('error', 'code')).to eq('invalid_param')
+      end
+    end
+
+    describe 'client_group_id param' do
+      let(:group) { create(:client_group, user: user) }
+
+      before { create(:client, user: user, iva: iva, legal_name: 'Grouped Client', legal_number: '20111111110', tax_condition: :registered, client_group: group) }
+
+      it 'returns only clients in the given group' do
+        get '/api/v1/clients', params: { client_group_id: group.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to contain_exactly('Grouped Client')
+      end
+
+      it 'returns empty when client_group_id belongs to another user' do
+        other_group = create(:client_group, user: other_user)
+        get '/api/v1/clients', params: { client_group_id: other_group.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data']).to be_empty
+        expect(body['meta']['count']).to eq(0)
+      end
+    end
+
+    describe 'combined filters' do
+      let(:group) { create(:client_group, user: user) }
+
+      before { create(:client, user: user, iva: iva, legal_name: 'García Monotributo', legal_number: '20222222220', tax_condition: :self_employed, client_group: group) }
+
+      it 'applies q and tax_condition with AND logic' do
+        get '/api/v1/clients', params: { q: 'García', tax_condition: 'self_employed' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to contain_exactly('García Monotributo')
+      end
+
+      it 'applies q and client_group_id with AND logic' do
+        get '/api/v1/clients', params: { q: 'García', client_group_id: group.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data'].map { |c| c['legal_name'] }).to contain_exactly('García Monotributo')
+      end
+    end
+
+    describe 'meta reflects filtered count' do
+      it 'returns filtered count not total count in meta' do
+        get '/api/v1/clients', params: { q: 'García' }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['meta']['count']).to eq(1)
+        expect(body['meta']['pages']).to eq(1)
+      end
+    end
+  end
+
   describe 'POST /api/v1/clients' do
     it 'creates a client' do
       post '/api/v1/clients',

@@ -4,6 +4,16 @@ module Api
       before_action :set_client, only: %i[show update destroy deactivate reactivate]
 
       def index
+        if params[:tax_condition].present?
+          invalid = Array(params[:tax_condition]).reject { |v| Client.tax_conditions.key?(v) }
+          if invalid.any?
+            skip_policy_scope
+            return render json: {
+              error: { code: "invalid_param", message: "Unknown tax_condition: #{invalid.join(', ')}" }
+            }, status: :unprocessable_entity
+          end
+        end
+
         base_scope = if params[:status] == "inactive"
           policy_scope(Client).where(active: false)
         else
