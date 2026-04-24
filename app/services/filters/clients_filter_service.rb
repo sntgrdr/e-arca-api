@@ -16,7 +16,9 @@ module Filters
 
     # Searches both legal_name and commercial name (OR logic)
     def filter_by_name(result)
-      value = stripped_param(:q)
+      value = stripped_param(:legal_name)
+      value = stripped_param(:name) if value.blank?
+
       return result if value.blank?
 
       sanitized = sanitize(value)
@@ -47,6 +49,5 @@ module Filters
 
       result.where(client_group_id: values)
     end
-
   end
 end

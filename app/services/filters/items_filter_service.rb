@@ -49,6 +49,5 @@ module Filters
 
       result.where("items.price <= ?", value.to_f)
     end
-
   end
 end

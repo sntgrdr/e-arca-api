@@ -89,6 +89,5 @@ module Filters
 
       result.where(client_id: value)
     end
-
   end
 end

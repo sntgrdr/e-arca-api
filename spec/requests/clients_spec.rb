@@ -75,7 +75,7 @@ RSpec.describe 'Api::V1::Clients', type: :request do
 
     describe 'q param' do
       it 'filters by legal_name (case-insensitive partial)' do
-        get '/api/v1/clients', params: { q: 'GARCÍA' }, headers: headers
+        get '/api/v1/clients', params: { legal_name: 'GARCÍA' }, headers: headers
         body = JSON.parse(response.body)
         expect(body['data'].map { |c| c['legal_name'] }).to include('García Hermanos')
         expect(body['data'].map { |c| c['legal_name'] }).not_to include('López Consultores')
@@ -83,14 +83,14 @@ RSpec.describe 'Api::V1::Clients', type: :request do
       end
 
       it 'filters by commercial name (name field)' do
-        get '/api/v1/clients', params: { q: 'López & Asoc' }, headers: headers
+        get '/api/v1/clients', params: { name: 'López & Asoc' }, headers: headers
         body = JSON.parse(response.body)
         expect(body['data'].map { |c| c['legal_name'] }).to include('López Consultores')
         expect(body['meta']['count']).to eq(1)
       end
 
-      it 'returns all when q is blank' do
-        get '/api/v1/clients', params: { q: '' }, headers: headers
+      it 'returns all when legal_name and name are blank' do
+        get '/api/v1/clients', params: { legal_name: '', name: '' }, headers: headers
         body = JSON.parse(response.body)
         expect(body['meta']['count']).to eq(3)
       end
@@ -150,14 +150,14 @@ RSpec.describe 'Api::V1::Clients', type: :request do
 
       before { create(:client, user: user, iva: iva, legal_name: 'García Monotributo', legal_number: '20222222220', tax_condition: :self_employed, client_group: group) }
 
-      it 'applies q and tax_condition with AND logic' do
-        get '/api/v1/clients', params: { q: 'García', tax_condition: 'self_employed' }, headers: headers
+      it 'applies legal_name and tax_condition with AND logic' do
+        get '/api/v1/clients', params: { legal_name: 'García', tax_condition: 'self_employed' }, headers: headers
         body = JSON.parse(response.body)
         expect(body['data'].map { |c| c['legal_name'] }).to contain_exactly('García Monotributo')
       end
 
-      it 'applies q and client_group_id with AND logic' do
-        get '/api/v1/clients', params: { q: 'García', client_group_id: group.id }, headers: headers
+      it 'applies legal_name and client_group_id with AND logic' do
+        get '/api/v1/clients', params: { legal_name: 'García', client_group_id: group.id }, headers: headers
         body = JSON.parse(response.body)
         expect(body['data'].map { |c| c['legal_name'] }).to contain_exactly('García Monotributo')
       end
@@ -165,7 +165,7 @@ RSpec.describe 'Api::V1::Clients', type: :request do
 
     describe 'meta reflects filtered count' do
       it 'returns filtered count not total count in meta' do
-        get '/api/v1/clients', params: { q: 'García' }, headers: headers
+        get '/api/v1/clients', params: { legal_name: 'García' }, headers: headers
         body = JSON.parse(response.body)
         expect(body['meta']['count']).to eq(1)
         expect(body['meta']['pages']).to eq(1)
