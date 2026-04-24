@@ -2,7 +2,7 @@ module Filters
   class ClientsFilterService < BaseFilterService
     def call
       result = scope.includes(:client_group)
-      result = filter_by_q(result)
+      result = filter_by_name(result)
       result = filter_by_legal_number(result)
       result = filter_by_tax_condition(result)
       result = filter_by_client_group_id(result)
@@ -15,7 +15,7 @@ module Filters
     private
 
     # Searches both legal_name and commercial name (OR logic)
-    def filter_by_q(result)
+    def filter_by_name(result)
       value = stripped_param(:q)
       return result if value.blank?
 
