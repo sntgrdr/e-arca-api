@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 module Filters
-  class ClientInvoicesFilterService < BaseFilterService
+  class CreditNotesFilterService < BaseFilterService
     def call
       result = scope.includes(:client, :sell_point)
       result = filter_by_number(result)
@@ -14,7 +16,7 @@ module Filters
       result = filter_by_client_id(result)
       result
     rescue StandardError => e
-      Rails.logger.error("ClientInvoicesFilterService error: #{e.message}")
+      Rails.logger.error("CreditNotesFilterService error: #{e.message}")
       scope.includes(:client, :sell_point)
     end
 

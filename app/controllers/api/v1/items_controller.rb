@@ -6,8 +6,8 @@ module Api
       def index
         base_scope = policy_scope(Item).active
         filtered = ::Filters::ItemsFilterService.new(params, base_scope).call
-        result = paginate(filtered)
-        render json: result[:data], meta: result[:pagination], each_serializer: ItemSerializer
+        result = pagination_result(filtered)
+        render_paginated(result, serializer: ItemSerializer)
       end
 
       def show

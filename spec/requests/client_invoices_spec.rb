@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Api::V1::ClientInvoices', type: :request do
@@ -11,9 +13,88 @@ RSpec.describe 'Api::V1::ClientInvoices', type: :request do
   describe 'GET /api/v1/client_invoices' do
     before { create_list(:client_invoice, 3, user: user, client: client, sell_point: sell_point) }
 
-    it 'returns paginated invoices' do
+    it 'returns 200' do
       get '/api/v1/client_invoices', headers: headers, as: :json
       expect(response).to have_http_status(:ok)
+    end
+
+    it 'wraps records under a data key' do
+      get '/api/v1/client_invoices', headers: headers, as: :json
+      body = JSON.parse(response.body)
+      expect(body).to have_key('data')
+      expect(body['data'].length).to eq(3)
+    end
+
+    it 'returns a meta object with pagination fields' do
+      get '/api/v1/client_invoices', headers: headers, as: :json
+      meta = JSON.parse(response.body)['meta']
+      expect(meta).to include('count', 'page', 'items', 'pages')
+      expect(meta['page']).to eq(1)
+      expect(meta['count']).to eq(3)
+    end
+
+    it 'respects the page param' do
+      create_list(:client_invoice, 20, user: user, client: client, sell_point: sell_point)
+      get '/api/v1/client_invoices', params: { page: 2 }, headers: headers
+      body = JSON.parse(response.body)
+      expect(body['meta']['page']).to eq(2)
+      expect(body['data'].length).to be > 0
+    end
+
+    it 'returns 404 for an out-of-range page' do
+      get '/api/v1/client_invoices', params: { page: 9999 }, headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it 'returns 401 without auth headers' do
+      get '/api/v1/client_invoices', as: :json
+      expect(response).to have_http_status(:unauthorized)
+    end
+
+    context 'filtered by client_id' do
+      let(:other_client) { create(:client, user: user, iva: iva) }
+
+      before do
+        create(:client_invoice, user: user, client: other_client, sell_point: sell_point)
+      end
+
+      it 'returns only invoices for the given client' do
+        get '/api/v1/client_invoices', params: { client_id: client.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['meta']['count']).to eq(3)
+        expect(body['data'].all? { |inv| inv['client']['id'] == client.id }).to be true
+      end
+
+      it 'returns empty when no invoices match the client' do
+        other_c = create(:client, user: user, iva: iva)
+        get '/api/v1/client_invoices', params: { client_id: other_c.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data']).to be_empty
+        expect(body['meta']['count']).to eq(0)
+      end
+    end
+
+    context 'filtered by sell_point_id' do
+      let(:other_sell_point) { create(:sell_point, user: user) }
+
+      before do
+        create(:client_invoice, user: user, client: client, sell_point: other_sell_point)
+      end
+
+      it 'returns only invoices for the given sell_point' do
+        get '/api/v1/client_invoices', params: { sell_point_id: sell_point.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['meta']['count']).to eq(3)
+        expect(body['data'].all? { |inv| inv['sell_point']['id'] == sell_point.id }).to be true
+      end
+
+      it 'returns empty when no invoices match the sell_point' do
+        other_sp = create(:sell_point, user: user)
+        get '/api/v1/client_invoices', params: { sell_point_id: other_sp.id }, headers: headers
+        body = JSON.parse(response.body)
+        expect(body['data']).to be_empty
+        expect(body['meta']['count']).to eq(0)
+      end
     end
   end
 

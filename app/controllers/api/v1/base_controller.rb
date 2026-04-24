@@ -44,7 +44,7 @@ module Api
         render json: { errors: Array(messages) }, status: status
       end
 
-      def paginate(collection)
+      def pagination_result(collection)
         pagy, records = pagy(collection)
         {
           data: records,
@@ -54,6 +54,16 @@ module Api
             items: pagy.limit,
             pages: pagy.last
           }
+        }
+      end
+
+      def render_paginated(result, serializer:)
+        render json: {
+          data: ActiveModelSerializers::SerializableResource.new(
+            result[:data],
+            each_serializer: serializer
+          ),
+          meta: result[:pagination]
         }
       end
 

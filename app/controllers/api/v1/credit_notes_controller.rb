@@ -4,10 +4,12 @@ module Api
       before_action :set_credit_note, only: %i[show update destroy send_to_arca download_pdf]
 
       def index
-        credit_notes = policy_scope(CreditNote)
+        scope = policy_scope(CreditNote)
           .includes(:client, :sell_point, :client_invoice, lines: :iva)
           .order(date: :desc)
-        render json: credit_notes, each_serializer: CreditNoteSerializer
+        filtered = ::Filters::CreditNotesFilterService.new(params, scope).call
+        result = pagination_result(filtered)
+        render_paginated(result, serializer: CreditNoteSerializer)
       end
 
       def show
