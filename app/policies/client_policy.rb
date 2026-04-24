@@ -19,6 +19,10 @@ class ClientPolicy < ApplicationPolicy
     true
   end
 
+  def bulk_destroy?
+    true
+  end
+
   def destroy?
     owner? && !record[:final_client]
   end

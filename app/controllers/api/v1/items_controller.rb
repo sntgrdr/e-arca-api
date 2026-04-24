@@ -41,6 +41,36 @@ module Api
         head :no_content
       end
 
+      def bulk_destroy
+        authorize Item, :bulk_destroy?
+        ids = bulk_ids_param
+        return render_bulk_ids_error if ids.nil?
+
+        scope = policy_scope(Item)
+        result = ::Bulk::DestroyItemsService.new(scope: scope, ids: ids).call
+        render json: result
+      end
+
+      def bulk_activate
+        authorize Item, :bulk_activate?
+        ids = bulk_ids_param
+        return render_bulk_ids_error if ids.nil?
+
+        scope = policy_scope(Item)
+        result = ::Bulk::ActivateItemsService.new(scope: scope, ids: ids).call
+        render json: result
+      end
+
+      def bulk_deactivate
+        authorize Item, :bulk_deactivate?
+        ids = bulk_ids_param
+        return render_bulk_ids_error if ids.nil?
+
+        scope = policy_scope(Item)
+        result = ::Bulk::DeactivateItemsService.new(scope: scope, ids: ids).call
+        render json: result
+      end
+
       def autocomplete
         authorize Item
         items = Item.all_my_items(current_user.id).active

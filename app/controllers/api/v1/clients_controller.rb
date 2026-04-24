@@ -94,6 +94,16 @@ module Api
         render json: { reactivated: updated }
       end
 
+      def bulk_destroy
+        authorize Client, :bulk_destroy?
+        ids = bulk_ids_param
+        return render_bulk_ids_error if ids.nil?
+
+        scope = policy_scope(Client)
+        result = ::Bulk::DestroyClientsService.new(scope: scope, ids: ids).call
+        render json: result
+      end
+
       private
 
       def set_client

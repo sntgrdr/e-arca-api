@@ -28,18 +28,27 @@ Rails.application.routes.draw do
           get   :search
           patch :bulk_deactivate
           patch :bulk_reactivate
+          post  :bulk_destroy
         end
       end
       resources :client_groups
       resources :item_groups
       resources :items do
-        collection { get :autocomplete }
+        collection do
+          get   :autocomplete
+          post  :bulk_destroy
+          patch :bulk_activate
+          patch :bulk_deactivate
+        end
       end
       resources :ivas
       resources :sell_points
 
       resources :client_invoices do
-        collection { get :next_number }
+        collection do
+          get  :next_number
+          post :bulk_destroy
+        end
         member do
           post :send_to_arca
           get  :download_pdf
@@ -49,8 +58,9 @@ Rails.application.routes.draw do
 
       resources :credit_notes do
         collection do
-          get :next_number
-          get :create_from_invoice
+          get  :next_number
+          get  :create_from_invoice
+          post :bulk_destroy
         end
         member do
           post :send_to_arca

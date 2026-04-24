@@ -22,6 +22,16 @@ module Api
         render json: { number: CreditNote.current_number(current_user.id, params[:sell_point_id], params[:invoice_type]) }
       end
 
+      def bulk_destroy
+        authorize CreditNote, :bulk_destroy?
+        ids = bulk_ids_param
+        return render_bulk_ids_error if ids.nil?
+
+        scope = policy_scope(CreditNote)
+        result = ::Bulk::DestroyCreditNotesService.new(scope: scope, ids: ids).call
+        render json: result
+      end
+
       # GET /api/v1/credit_notes/create_from_invoice?client_invoice_id=:id
       # Builds an unsaved credit note pre-filled from the invoice. Frontend uses
       # this to populate the form; the user edits number/lines and submits to #create.
