@@ -1,10 +1,14 @@
 module Api
   module V1
     class ItemsController < BaseController
-      before_action :set_item, only: %i[show update destroy]
+      before_action :set_item, only: %i[show update destroy deactivate reactivate]
 
       def index
-        base_scope = policy_scope(Item).active
+        base_scope = if params[:status] == "inactive"
+          policy_scope(Item).where(active: false)
+        else
+          policy_scope(Item).active
+        end
         filtered = ::Filters::ItemsFilterService.new(params, base_scope).call
         result = pagination_result(filtered)
         render_paginated(result, serializer: ItemSerializer)
@@ -39,6 +43,18 @@ module Api
         authorize @item
         @item.destroy!
         head :no_content
+      end
+
+      def deactivate
+        authorize @item
+        @item.update!(active: false)
+        render json: @item, serializer: ItemSerializer
+      end
+
+      def reactivate
+        authorize @item
+        @item.update!(active: true)
+        render json: @item, serializer: ItemSerializer
       end
 
       def bulk_destroy

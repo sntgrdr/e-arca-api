@@ -1,10 +1,11 @@
 module Api
   module V1
     class IvasController < BaseController
-      before_action :set_iva, only: %i[show update destroy]
+      before_action :set_iva, only: %i[show update destroy deactivate reactivate]
 
       def index
-        result = pagination_result(policy_scope(Iva).active)
+        scope = params[:status] == "inactive" ? policy_scope(Iva).where(active: false) : policy_scope(Iva).active
+        result = pagination_result(scope)
         render_paginated(result, serializer: IvaSerializer)
       end
 
@@ -37,6 +38,18 @@ module Api
         authorize @iva
         @iva.destroy!
         head :no_content
+      end
+
+      def deactivate
+        authorize @iva
+        @iva.update!(active: false)
+        render json: @iva, serializer: IvaSerializer
+      end
+
+      def reactivate
+        authorize @iva
+        @iva.update!(active: true)
+        render json: @iva, serializer: IvaSerializer
       end
 
       private

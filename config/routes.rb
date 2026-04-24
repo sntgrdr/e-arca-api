@@ -31,9 +31,23 @@ Rails.application.routes.draw do
           post  :bulk_destroy
         end
       end
-      resources :client_groups
-      resources :item_groups
+      resources :client_groups do
+        member do
+          patch :deactivate
+          patch :reactivate
+        end
+      end
+      resources :item_groups do
+        member do
+          patch :deactivate
+          patch :reactivate
+        end
+      end
       resources :items do
+        member do
+          patch :deactivate
+          patch :reactivate
+        end
         collection do
           get   :autocomplete
           post  :bulk_destroy
@@ -41,8 +55,18 @@ Rails.application.routes.draw do
           patch :bulk_deactivate
         end
       end
-      resources :ivas
-      resources :sell_points
+      resources :ivas do
+        member do
+          patch :deactivate
+          patch :reactivate
+        end
+      end
+      resources :sell_points do
+        member do
+          patch :deactivate
+          patch :reactivate
+        end
+      end
 
       resources :client_invoices do
         collection do
