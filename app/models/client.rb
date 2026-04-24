@@ -40,6 +40,8 @@ class Client < ApplicationRecord
   belongs_to :iva, optional: true
   belongs_to :client_group, optional: true
 
+  has_many :comments, as: :commentable, dependent: :destroy
+
   before_validation :sanitize_legal_number
 
   validates :legal_name, :legal_number, :tax_condition, presence: true

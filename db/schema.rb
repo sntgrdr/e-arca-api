@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_14_190003) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_24_203410) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -120,6 +120,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_14_190003) do
     t.index ["user_id", "final_client"], name: "index_clients_on_user_id_final_client_unique", unique: true, where: "(final_client = true)"
     t.index ["user_id", "legal_name"], name: "index_clients_on_user_id_and_legal_name"
     t.index ["user_id"], name: "index_clients_on_user_id"
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.bigint "commentable_id", null: false
+    t.string "commentable_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
+    t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -414,6 +425,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_14_190003) do
   add_foreign_key "clients", "client_groups"
   add_foreign_key "clients", "ivas"
   add_foreign_key "clients", "users"
+  add_foreign_key "comments", "users"
   add_foreign_key "invoices", "batch_invoice_processes"
   add_foreign_key "invoices", "clients"
   add_foreign_key "invoices", "invoices", column: "client_invoice_id"

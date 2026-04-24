@@ -56,6 +56,7 @@ class Invoice < ApplicationRecord
   belongs_to :sell_point
 
   has_many :lines, as: :lineable, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
   accepts_nested_attributes_for :lines, allow_destroy: true
 
   enum :afip_status, {
