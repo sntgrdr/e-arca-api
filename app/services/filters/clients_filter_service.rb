@@ -1,10 +1,5 @@
 module Filters
-  class ClientsFilterService
-    def initialize(params, scope)
-      @params = params
-      @scope = scope
-    end
-
+  class ClientsFilterService < BaseFilterService
     def call
       result = scope.includes(:client_group)
       result = filter_by_q(result)
@@ -18,8 +13,6 @@ module Filters
     end
 
     private
-
-    attr_reader :params, :scope
 
     # Searches both legal_name and commercial name (OR logic)
     def filter_by_q(result)
@@ -55,16 +48,5 @@ module Filters
       result.where(client_group_id: values)
     end
 
-    def stripped_param(key)
-      params[key].to_s.strip.presence
-    end
-
-    def array_param(key)
-      Array(params[key]).map(&:to_s).reject(&:blank?)
-    end
-
-    def sanitize(value)
-      ActiveRecord::Base.sanitize_sql_like(value)
-    end
   end
 end

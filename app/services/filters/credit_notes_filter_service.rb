@@ -1,12 +1,7 @@
 # frozen_string_literal: true
 
 module Filters
-  class CreditNotesFilterService
-    def initialize(params, scope)
-      @params = params
-      @scope = scope
-    end
-
+  class CreditNotesFilterService < BaseFilterService
     def call
       result = scope.includes(:client, :sell_point)
       result = filter_by_number(result)
@@ -26,8 +21,6 @@ module Filters
     end
 
     private
-
-    attr_reader :params, :scope
 
     def filter_by_number(result)
       value = stripped_param(:number)
@@ -99,12 +92,5 @@ module Filters
       result.where(client_id: value)
     end
 
-    def stripped_param(key)
-      params[key].to_s.strip.presence
-    end
-
-    def sanitize(value)
-      ActiveRecord::Base.sanitize_sql_like(value)
-    end
   end
 end

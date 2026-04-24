@@ -1,10 +1,5 @@
 module Filters
-  class ItemsFilterService
-    def initialize(params, scope)
-      @params = params
-      @scope = scope
-    end
-
+  class ItemsFilterService < BaseFilterService
     def call
       result = scope.includes(:iva)
       result = filter_by_code(result)
@@ -19,8 +14,6 @@ module Filters
     end
 
     private
-
-    attr_reader :params, :scope
 
     def filter_by_code(result)
       value = stripped_param(:code)
@@ -57,16 +50,5 @@ module Filters
       result.where("items.price <= ?", value.to_f)
     end
 
-    def stripped_param(key)
-      params[key].to_s.strip.presence
-    end
-
-    def array_param(key)
-      Array(params[key]).map(&:to_s).reject(&:blank?)
-    end
-
-    def sanitize(value)
-      ActiveRecord::Base.sanitize_sql_like(value)
-    end
   end
 end
