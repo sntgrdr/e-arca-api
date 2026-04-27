@@ -25,7 +25,7 @@ gem "pundit", "~> 2.4"
 gem "pagy", "~> 9.0"
 
 # Migration safety
-gem "strong_migrations", "~> 2.0"
+gem "strong_migrations", "~> 2.7"
 
 # Background jobs
 gem "solid_queue"
