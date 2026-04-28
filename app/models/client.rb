@@ -5,6 +5,7 @@
 #  id              :bigint           not null, primary key
 #  active          :boolean          default(TRUE)
 #  dni             :string
+#  email           :string
 #  final_client    :boolean          default(FALSE), not null
 #  legal_name      :string           default(""), not null
 #  legal_number    :string           default(""), not null
@@ -43,6 +44,7 @@ class Client < ApplicationRecord
   before_validation :sanitize_legal_number
 
   validates :legal_name, :legal_number, :tax_condition, presence: true
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
   validates :legal_name, :legal_number, uniqueness: { scope: :user_id, allow_nil: true }
   validates :final_client, uniqueness: { scope: :user_id }, if: -> { self[:final_client] }
 

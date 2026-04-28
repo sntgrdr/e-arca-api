@@ -22,6 +22,16 @@ module Api
         render json: { number: ClientInvoice.current_number(current_user.id, params[:sell_point_id], params[:invoice_type]) }
       end
 
+      def bulk_destroy
+        authorize ClientInvoice, :bulk_destroy?
+        ids = bulk_ids_param
+        return render_bulk_ids_error if ids.nil?
+
+        scope = policy_scope(ClientInvoice)
+        result = ::Bulk::DestroyClientInvoicesService.new(scope: scope, ids: ids).call
+        render json: result
+      end
+
       def create
         invoice = ClientInvoice.new(client_invoice_params.merge(user_id: current_user.id))
         invoice.lines.each { |line| line.user_id = current_user.id }
