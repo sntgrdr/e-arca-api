@@ -123,17 +123,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_155731) do
     t.index ["user_id"], name: "index_clients_on_user_id"
   end
 
-  create_table "comments", force: :cascade do |t|
-    t.text "body", null: false
-    t.bigint "commentable_id", null: false
-    t.string "commentable_type", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
-    t.index ["user_id"], name: "index_comments_on_user_id"
-  end
-
   create_table "invoices", force: :cascade do |t|
     t.datetime "afip_authorized_at"
     t.string "afip_invoice_number"
@@ -426,7 +415,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_155731) do
   add_foreign_key "clients", "client_groups"
   add_foreign_key "clients", "ivas"
   add_foreign_key "clients", "users"
-  add_foreign_key "comments", "users"
   add_foreign_key "invoices", "batch_invoice_processes"
   add_foreign_key "invoices", "clients"
   add_foreign_key "invoices", "invoices", column: "client_invoice_id"

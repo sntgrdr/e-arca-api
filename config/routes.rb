@@ -30,7 +30,6 @@ Rails.application.routes.draw do
           patch :bulk_reactivate
           post  :bulk_destroy
         end
-        resources :comments, only: %i[index create destroy]
       end
       resources :client_groups do
         member do
@@ -79,7 +78,6 @@ Rails.application.routes.draw do
           get  :download_pdf
           get  :history
         end
-        resources :comments, only: %i[index create destroy]
       end
 
       resources :credit_notes do
@@ -92,7 +90,6 @@ Rails.application.routes.draw do
           post :send_to_arca
           get  :download_pdf
         end
-        resources :comments, only: %i[index create destroy]
       end
 
       resources :batch_invoice_processes, only: [ :index, :create, :show ] do
