@@ -59,7 +59,7 @@ module Api
       end
 
       def iva_params
-        params.require(:iva).permit(:percentage, :name)
+        params.require(:iva).permit(:percentage, :name, :active)
       end
     end
   end

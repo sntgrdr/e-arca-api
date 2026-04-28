@@ -18,7 +18,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     context 'when all clients can be deleted' do
       it 'deletes the clients and returns deleted count' do
         post '/api/v1/clients/bulk_destroy',
-             params: { ids: [client1.id, client2.id] },
+             params: { ids: [ client1.id, client2.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -32,7 +32,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     context 'when a client is the final_client' do
       it 'skips it and returns reason' do
         post '/api/v1/clients/bulk_destroy',
-             params: { ids: [client1.id, final.id] },
+             params: { ids: [ client1.id, final.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -48,7 +48,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
       it 'skips it with has_invoices reason' do
         post '/api/v1/clients/bulk_destroy',
-             params: { ids: [client1.id] },
+             params: { ids: [ client1.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -82,7 +82,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
     context 'when not authenticated' do
       it 'returns 401' do
-        post '/api/v1/clients/bulk_destroy', params: { ids: [client1.id] }, as: :json
+        post '/api/v1/clients/bulk_destroy', params: { ids: [ client1.id ] }, as: :json
         expect(response).to have_http_status(:unauthorized)
       end
     end
@@ -93,7 +93,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
       it 'does not delete and returns deleted: 0' do
         post '/api/v1/clients/bulk_destroy',
-             params: { ids: [other_client.id] },
+             params: { ids: [ other_client.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -114,7 +114,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     context 'when all items can be deleted' do
       it 'deletes and returns deleted count' do
         post '/api/v1/items/bulk_destroy',
-             params: { ids: [item1.id, item2.id] },
+             params: { ids: [ item1.id, item2.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -134,7 +134,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
       it 'skips it with referenced_in_line reason' do
         post '/api/v1/items/bulk_destroy',
-             params: { ids: [item1.id] },
+             params: { ids: [ item1.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -166,7 +166,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
     it 'activates the items and returns updated count' do
       patch '/api/v1/items/bulk_activate',
-            params: { ids: [inactive1.id, inactive2.id] },
+            params: { ids: [ inactive1.id, inactive2.id ] },
             headers: headers, as: :json
 
       expect(response).to have_http_status(:ok)
@@ -185,7 +185,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     end
 
     it 'returns 401 when not authenticated' do
-      patch '/api/v1/items/bulk_activate', params: { ids: [inactive1.id] }, as: :json
+      patch '/api/v1/items/bulk_activate', params: { ids: [ inactive1.id ] }, as: :json
       expect(response).to have_http_status(:unauthorized)
     end
   end
@@ -199,7 +199,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
     it 'deactivates the items and returns updated count' do
       patch '/api/v1/items/bulk_deactivate',
-            params: { ids: [active1.id, active2.id] },
+            params: { ids: [ active1.id, active2.id ] },
             headers: headers, as: :json
 
       expect(response).to have_http_status(:ok)
@@ -231,7 +231,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     context 'when all invoices have no CAE' do
       it 'deletes and returns deleted count' do
         post '/api/v1/client_invoices/bulk_destroy',
-             params: { ids: [invoice1.id, invoice2.id] },
+             params: { ids: [ invoice1.id, invoice2.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -244,7 +244,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     context 'when an invoice has a CAE' do
       it 'skips it with has_cae reason' do
         post '/api/v1/client_invoices/bulk_destroy',
-             params: { ids: [invoice1.id, authorized.id] },
+             params: { ids: [ invoice1.id, authorized.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -268,7 +268,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
     context 'when not authenticated' do
       it 'returns 401' do
-        post '/api/v1/client_invoices/bulk_destroy', params: { ids: [invoice1.id] }, as: :json
+        post '/api/v1/client_invoices/bulk_destroy', params: { ids: [ invoice1.id ] }, as: :json
         expect(response).to have_http_status(:unauthorized)
       end
     end
@@ -290,7 +290,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     context 'when all credit notes have no CAE' do
       it 'deletes and returns deleted count' do
         post '/api/v1/credit_notes/bulk_destroy',
-             params: { ids: [cn1.id, cn2.id] },
+             params: { ids: [ cn1.id, cn2.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -303,7 +303,7 @@ RSpec.describe 'Bulk Actions', type: :request do
     context 'when a credit note has a CAE' do
       it 'skips it with has_cae reason' do
         post '/api/v1/credit_notes/bulk_destroy',
-             params: { ids: [cn1.id, cn_cae.id] },
+             params: { ids: [ cn1.id, cn_cae.id ] },
              headers: headers, as: :json
 
         expect(response).to have_http_status(:ok)
@@ -326,7 +326,7 @@ RSpec.describe 'Bulk Actions', type: :request do
 
     context 'when not authenticated' do
       it 'returns 401' do
-        post '/api/v1/credit_notes/bulk_destroy', params: { ids: [cn1.id] }, as: :json
+        post '/api/v1/credit_notes/bulk_destroy', params: { ids: [ cn1.id ] }, as: :json
         expect(response).to have_http_status(:unauthorized)
       end
     end

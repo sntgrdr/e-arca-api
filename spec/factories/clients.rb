@@ -5,6 +5,7 @@
 #  id              :bigint           not null, primary key
 #  active          :boolean          default(TRUE)
 #  dni             :string
+#  email           :string
 #  final_client    :boolean          default(FALSE), not null
 #  legal_name      :string           default(""), not null
 #  legal_number    :string           default(""), not null

@@ -207,4 +207,47 @@ RSpec.describe Filters::ClientsFilterService, type: :service do
       expect(filter).not_to include(other)
     end
   end
+
+  describe '#filter_by_status' do
+    let!(:active_client)   { create(:client, user: user, active: true) }
+    let!(:inactive_client) { create(:client, user: user, active: false) }
+
+    context 'when status is "inactive"' do
+      let(:params) { { status: 'inactive' } }
+
+      it 'returns only inactive clients' do
+        expect(filter).to include(inactive_client)
+        expect(filter).not_to include(active_client)
+      end
+    end
+
+    context 'when status is absent' do
+      let(:params) { {} }
+
+      it 'returns only active clients' do
+        expect(filter).to include(active_client)
+        expect(filter).not_to include(inactive_client)
+      end
+    end
+
+    context 'when status is any other value' do
+      let(:params) { { status: 'all' } }
+
+      it 'returns only active clients' do
+        expect(filter).to include(active_client)
+        expect(filter).not_to include(inactive_client)
+      end
+    end
+  end
+
+  describe 'ordering' do
+    let!(:older_client) { create(:client, user: user, created_at: 2.days.ago) }
+    let!(:newer_client) { create(:client, user: user, created_at: 1.day.ago) }
+    let(:params) { {} }
+
+    it 'returns clients ordered by created_at descending' do
+      ids = filter.map(&:id)
+      expect(ids.index(newer_client.id)).to be < ids.index(older_client.id)
+    end
+  end
 end
