@@ -65,6 +65,10 @@ Rails.application.routes.draw do
           get :download_pdfs
         end
       end
+
+      resources :batch_arca_processes, only: %i[index create show] do
+        member { post :retry }
+      end
     end
   end
 
