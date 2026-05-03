@@ -58,6 +58,6 @@ class BatchArcaProcess < ApplicationRecord
   end
 
   def invoices_ordered
-    invoices.order("CAST(invoices.number AS INTEGER) ASC")
+    invoices.order(Arel.sql("CAST(invoices.number AS INTEGER) ASC"))
   end
 end

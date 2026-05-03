@@ -9,6 +9,6 @@ class BatchArcaProcessDetailSerializer < ActiveModel::Serializer
     object.batch_arca_process_invoices
           .includes(invoice: :client)
           .joins(:invoice)
-          .order("CAST(invoices.number AS INTEGER) ASC")
+          .order(Arel.sql("CAST(invoices.number AS INTEGER) ASC"))
   end
 end
