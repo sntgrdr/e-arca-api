@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_202753) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_03_203252) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -41,6 +41,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_202753) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "batch_arca_process_invoices", force: :cascade do |t|
+    t.text "arca_error"
+    t.string "arca_status", default: "pending", null: false
+    t.bigint "batch_arca_process_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id", null: false
+    t.datetime "processed_at"
+    t.datetime "updated_at", null: false
+    t.index ["arca_status"], name: "index_batch_arca_process_invoices_on_arca_status"
+    t.index ["batch_arca_process_id", "invoice_id"], name: "idx_batch_arca_invoices_uniqueness", unique: true
+    t.index ["batch_arca_process_id"], name: "index_batch_arca_process_invoices_on_batch_arca_process_id"
+    t.index ["invoice_id"], name: "index_batch_arca_process_invoices_on_invoice_id"
   end
 
   create_table "batch_arca_processes", force: :cascade do |t|
@@ -424,6 +438,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_202753) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "batch_arca_process_invoices", "batch_arca_processes"
+  add_foreign_key "batch_arca_process_invoices", "invoices"
   add_foreign_key "batch_arca_processes", "batch_arca_processes", column: "parent_batch_id"
   add_foreign_key "batch_arca_processes", "sell_points"
   add_foreign_key "batch_arca_processes", "users"
