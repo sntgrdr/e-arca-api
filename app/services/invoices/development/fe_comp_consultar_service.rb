@@ -18,6 +18,8 @@ module Invoices
         xml      = build_xml
         response = send_request(xml)
         parse_response(response.body)
+      rescue Faraday::TimeoutError, Faraday::ConnectionFailed
+        raise
       rescue StandardError => e
         Rails.logger.error("[FeCompConsultarService DEV] #{e.class}: #{e.message}")
         { authorized: false, cae: nil, error: e.message }
@@ -68,7 +70,7 @@ module Invoices
           authorized:          true,
           cae:                 cae,
           cae_expiration:      Date.strptime(result.at_xpath("CAEFchVto").content, "%Y%m%d"),
-          afip_authorized_at:  Time.strptime(result.at_xpath("FchProceso").content, "%Y%m%d%H%M%S"),
+          afip_authorized_at:  Time.zone.strptime(result.at_xpath("FchProceso").content, "%Y%m%d%H%M%S"),
           afip_invoice_number: result.at_xpath("CbteDesde")&.content
         }
       end

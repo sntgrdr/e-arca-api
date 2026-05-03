@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Invoices::Production::FeCompConsultarService do
+RSpec.describe Invoices::Production::FeCompConsultarService, type: :service do
   let(:service) do
     described_class.new(
       invoice_number: "5",
@@ -34,7 +34,7 @@ RSpec.describe Invoices::Production::FeCompConsultarService do
               </soap:Envelope>
             XML
           )
-        allow_any_instance_of(Invoices::Production::AuthWithArcaService).to receive(:call).and_return(["token123", "sign123"])
+        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return(["token123", "sign123"])
       end
 
       it "returns authorized: true with CAE data" do
@@ -69,13 +69,24 @@ RSpec.describe Invoices::Production::FeCompConsultarService do
               </soap:Envelope>
             XML
           )
-        allow_any_instance_of(Invoices::Production::AuthWithArcaService).to receive(:call).and_return(["token123", "sign123"])
+        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return(["token123", "sign123"])
       end
 
       it "returns authorized: false" do
         result = service.call
         expect(result[:authorized]).to be false
         expect(result[:cae]).to be_nil
+      end
+    end
+
+    context "when a network error occurs" do
+      before do
+        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return(["token123", "sign123"])
+        stub_request(:post, described_class::URL).to_raise(Faraday::TimeoutError)
+      end
+
+      it "re-raises the network error" do
+        expect { service.call }.to raise_error(Faraday::TimeoutError)
       end
     end
   end
