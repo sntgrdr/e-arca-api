@@ -97,6 +97,10 @@ class Invoice < ApplicationRecord
     cae.present?
   end
 
+  def arca_locked?
+    cae.present? || afip_authorized_at.present? || afip_invoice_number.present?
+  end
+
   private
 
   def being_discarded?
