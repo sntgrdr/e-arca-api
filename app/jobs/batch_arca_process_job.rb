@@ -4,6 +4,7 @@ class BatchArcaProcessJob < ApplicationJob
   discard_on ActiveRecord::RecordNotFound
 
   def perform(batch_arca_process_id)
+    batch = nil
     batch = BatchArcaProcess.find(batch_arca_process_id)
 
     return if batch.processing? || batch.completed?
@@ -24,10 +25,12 @@ class BatchArcaProcessJob < ApplicationJob
 
     BatchArca::ProcessorService.new(batch).call
   ensure
-    ApplicationRecord.connection.exec_query(
-      "SELECT pg_advisory_unlock($1, $2)",
-      "arca_advisory_unlock",
-      [ batch.user_id, batch.sell_point_id ]
-    ) rescue nil
+    if batch
+      ApplicationRecord.connection.exec_query(
+        "SELECT pg_advisory_unlock($1, $2)",
+        "arca_advisory_unlock",
+        [ batch.user_id, batch.sell_point_id ]
+      ) rescue nil
+    end
   end
 end

@@ -1,16 +1,15 @@
 module BatchArca
   class CreateService
-    MAX_INVOICES = 100
-
-    def initialize(user:, invoice_ids:, invoice_class:, idempotency_key: nil)
+    def initialize(user:, invoice_ids:, invoice_class:, idempotency_key: nil, parent_batch_id: nil)
       @user            = user
       @invoice_ids     = invoice_ids
       @invoice_class   = invoice_class
       @idempotency_key = idempotency_key
+      @parent_batch_id = parent_batch_id
     end
 
     def call
-      return too_many_error if @invoice_ids.size > MAX_INVOICES
+      return too_many_error if @invoice_ids.size > BatchArcaProcess::MAX_INVOICES
 
       existing = find_existing_by_idempotency_key
       return { success: true, batch: existing } if existing
@@ -62,7 +61,8 @@ module BatchArca
           invoice_type:    invoices.first.invoice_type,
           status:          :pending,
           total_invoices:  invoices.size,
-          idempotency_key: @idempotency_key
+          idempotency_key: @idempotency_key,
+          parent_batch_id: @parent_batch_id
         )
 
         invoices.each do |invoice|
@@ -81,7 +81,7 @@ module BatchArca
     end
 
     def too_many_error
-      { success: false, error: "Batch cannot exceed #{MAX_INVOICES} invoices" }
+      { success: false, error: "Batch cannot exceed #{BatchArcaProcess::MAX_INVOICES} invoices" }
     end
   end
 end

@@ -39,11 +39,11 @@ module Api
           user:            current_user,
           invoice_ids:     pending_invoice_ids_from(@batch),
           invoice_class:   @batch.invoice_class,
-          idempotency_key: retry_params[:idempotency_key]
+          idempotency_key: retry_params[:idempotency_key],
+          parent_batch_id: @batch.id
         ).call
 
         if result[:success]
-          result[:batch].update!(parent_batch_id: @batch.id)
           render json: result[:batch], serializer: BatchArcaProcessSerializer, status: :created
         else
           render json: { error: { code: "invalid_retry", message: result[:error] } },
