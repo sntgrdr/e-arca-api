@@ -30,9 +30,15 @@ module BatchArca
     end
 
     def load_and_validate_invoices
+      unless BatchArcaProcess::ALLOWED_CLASSES.include?(@invoice_class)
+        return { success: false, error: "Invalid invoice class" }
+      end
+
       invoices = @invoice_class.constantize
                                .where(user_id: @user.id, id: @invoice_ids)
                                .to_a
+
+      return { success: false, error: "No invoices provided" } if invoices.empty?
 
       if invoices.map(&:sell_point_id).uniq.size > 1
         return { success: false, error: "All invoices must belong to the same sell point" }

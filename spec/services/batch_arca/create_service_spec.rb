@@ -120,5 +120,27 @@ RSpec.describe BatchArca::CreateService, type: :service do
         }.not_to change(BatchArcaProcess, :count)
       end
     end
+
+    context "when invoice_ids is empty" do
+      it "returns an error" do
+        result = described_class.new(
+          user: user, invoice_ids: [],
+          invoice_class: "ClientInvoice", idempotency_key: "test-key-empty"
+        ).call
+        expect(result[:success]).to be false
+        expect(result[:error]).to match(/No invoices/)
+      end
+    end
+
+    context "when invoice_class is not whitelisted" do
+      it "returns an error without calling constantize on arbitrary input" do
+        result = described_class.new(
+          user: user, invoice_ids: [1],
+          invoice_class: "User", idempotency_key: "test-key-rce"
+        ).call
+        expect(result[:success]).to be false
+        expect(result[:error]).to match(/Invalid invoice class/)
+      end
+    end
   end
 end
