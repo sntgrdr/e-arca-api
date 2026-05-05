@@ -12,7 +12,7 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
 
   let(:batch) do
     b = create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C", total_invoices: 3)
-    [invoice1, invoice2, invoice3].each { |inv| create(:batch_arca_process_invoice, batch_arca_process: b, invoice: inv) }
+    [ invoice1, invoice2, invoice3 ].each { |inv| create(:batch_arca_process_invoice, batch_arca_process: b, invoice: inv) }
     b
   end
 
@@ -22,7 +22,7 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
   subject(:service) { described_class.new(batch) }
 
   before do
-    allow(Invoices::Development::AuthWithArcaService).to receive_message_chain(:new, :call).and_return(["fake_token", "fake_sign"])
+    allow(Invoices::Development::AuthWithArcaService).to receive_message_chain(:new, :call).and_return([ "fake_token", "fake_sign" ])
   end
 
   describe "#call" do
@@ -38,7 +38,7 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
 
       it "marks all join records as authorized" do
         service.call
-        expect(batch.batch_arca_process_invoices.pluck(:arca_status).uniq).to eq(["authorized"])
+        expect(batch.batch_arca_process_invoices.pluck(:arca_status).uniq).to eq([ "authorized" ])
       end
 
       it "increments processed_invoices to total" do
@@ -120,7 +120,7 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
 
       it "marks all join records as authorized" do
         service.call
-        expect(batch.batch_arca_process_invoices.pluck(:arca_status).uniq).to eq(["authorized"])
+        expect(batch.batch_arca_process_invoices.pluck(:arca_status).uniq).to eq([ "authorized" ])
       end
 
       it "sets processed_invoices to total_invoices" do

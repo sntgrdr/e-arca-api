@@ -34,7 +34,7 @@ RSpec.describe Invoices::Production::FeCompConsultarService, type: :service do
               </soap:Envelope>
             XML
           )
-        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return(["token123", "sign123"])
+        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return([ "token123", "sign123" ])
       end
 
       it "returns authorized: true with CAE data" do
@@ -69,7 +69,7 @@ RSpec.describe Invoices::Production::FeCompConsultarService, type: :service do
               </soap:Envelope>
             XML
           )
-        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return(["token123", "sign123"])
+        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return([ "token123", "sign123" ])
       end
 
       it "returns authorized: false" do
@@ -81,7 +81,7 @@ RSpec.describe Invoices::Production::FeCompConsultarService, type: :service do
 
     context "when a network error occurs" do
       before do
-        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return(["token123", "sign123"])
+        allow(Invoices::Production::AuthWithArcaService).to receive_message_chain(:new, :call).and_return([ "token123", "sign123" ])
         stub_request(:post, described_class::URL).to_raise(Faraday::TimeoutError)
       end
 

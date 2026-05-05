@@ -54,7 +54,6 @@ module Api
       def batch_params
         params.require(:batch_arca_process).permit(:invoice_class, :idempotency_key, invoice_ids: [])
       end
-
     end
   end
 end

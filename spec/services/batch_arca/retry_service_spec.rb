@@ -92,7 +92,7 @@ RSpec.describe BatchArca::RetryService, type: :service do
 
       it "returns success without changing any join records" do
         expect(result[:success]).to be true
-        expect(batch.batch_arca_process_invoices.pluck(:arca_status)).to eq(["authorized"])
+        expect(batch.batch_arca_process_invoices.pluck(:arca_status)).to eq([ "authorized" ])
       end
 
       it "re-enqueues the job" do

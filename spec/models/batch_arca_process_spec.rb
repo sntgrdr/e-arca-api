@@ -94,7 +94,7 @@ RSpec.describe BatchArcaProcess, type: :model do
 
     it "sorts invoices numerically, not lexicographically" do
       batch = create(:batch_arca_process, user: user, sell_point: sell_point, total_invoices: 3)
-      [10, 2, 9].each do |n|
+      [ 10, 2, 9 ].each do |n|
         inv = create(:client_invoice, user: user, sell_point: sell_point, client: client, number: n.to_s)
         create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: inv)
       end

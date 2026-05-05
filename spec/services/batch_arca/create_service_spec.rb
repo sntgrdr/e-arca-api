@@ -40,7 +40,7 @@ RSpec.describe BatchArca::CreateService, type: :service do
     it "creates BatchArcaProcessInvoice records for each invoice" do
       result = service.call
       expect(result[:batch].batch_arca_process_invoices.count).to eq(3)
-      expect(result[:batch].batch_arca_process_invoices.map(&:arca_status).uniq).to eq(["pending"])
+      expect(result[:batch].batch_arca_process_invoices.map(&:arca_status).uniq).to eq([ "pending" ])
     end
 
     it "enqueues a BatchArcaProcessJob" do
@@ -165,7 +165,7 @@ RSpec.describe BatchArca::CreateService, type: :service do
     context "when invoice_class is not whitelisted" do
       it "returns an error without calling constantize on arbitrary input" do
         result = described_class.new(
-          user: user, invoice_ids: [1],
+          user: user, invoice_ids: [ 1 ],
           invoice_class: "User", idempotency_key: "test-key-rce"
         ).call
         expect(result[:success]).to be false

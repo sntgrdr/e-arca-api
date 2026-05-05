@@ -51,5 +51,4 @@ RSpec.describe BatchArcaProcessInvoiceSerializer, type: :serializer do
   it "returns client.legal_name as client_name" do
     expect(json["client_name"]).to eq(client.legal_name)
   end
-
 end

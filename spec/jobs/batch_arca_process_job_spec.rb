@@ -9,10 +9,10 @@ RSpec.describe BatchArcaProcessJob, type: :job do
     allow(BatchArca::ProcessorService).to receive_message_chain(:new, :call)
     allow(ApplicationRecord.connection).to receive(:exec_query)
       .with(/pg_try_advisory_lock/, anything, anything)
-      .and_return([{ "pg_try_advisory_lock" => true }])
+      .and_return([ { "pg_try_advisory_lock" => true } ])
     allow(ApplicationRecord.connection).to receive(:exec_query)
       .with(/pg_advisory_unlock/, anything, anything)
-      .and_return([{}])
+      .and_return([ {} ])
   end
 
   describe "#perform" do
@@ -50,7 +50,7 @@ RSpec.describe BatchArcaProcessJob, type: :job do
       before do
         allow(ApplicationRecord.connection).to receive(:exec_query)
           .with(/pg_try_advisory_lock/, anything, anything)
-          .and_return([{ "pg_try_advisory_lock" => false }])
+          .and_return([ { "pg_try_advisory_lock" => false } ])
       end
 
       it "marks the batch as failed with the lock-contention error message" do
