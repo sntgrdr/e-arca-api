@@ -50,6 +50,13 @@ class BatchArcaProcess < ApplicationRecord
     where.not(id: where.not(parent_batch_id: nil).select(:parent_batch_id))
   }
 
+  scope :not_all_invoices_failed, -> {
+    has_non_failed = BatchArcaProcessInvoice
+      .where.not(arca_status: "failed")
+      .select(:batch_arca_process_id)
+    where(total_invoices: 0).or(where(id: has_non_failed))
+  }
+
   enum :status, {
     pending:    "pending",
     processing: "processing",

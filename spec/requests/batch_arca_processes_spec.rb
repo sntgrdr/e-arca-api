@@ -148,6 +148,13 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       other_user = create(:user)
       create(:batch_arca_process, user: other_user, sell_point: create(:sell_point, user: other_user))
     end
+    let!(:all_failed_batch) do
+      inv = create(:client_invoice, user: user, sell_point: sell_point, client: client, invoice_type: "C")
+      b   = create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C",
+                   total_invoices: 1, failed_invoices: 1, status: :failed)
+      create(:batch_arca_process_invoice, batch_arca_process: b, invoice: inv, arca_status: :failed)
+      b
+    end
 
     it "returns only the current user's non-superseded batches" do
       get "/api/v1/batch_arca_processes", headers: headers
@@ -168,6 +175,12 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       expect(body["data"].length).to eq(3)
+    end
+
+    it "excludes batches where all invoices failed" do
+      get "/api/v1/batch_arca_processes", headers: headers
+      ids = JSON.parse(response.body)["data"].map { |b| b["id"] }
+      expect(ids).not_to include(all_failed_batch.id)
     end
   end
 end

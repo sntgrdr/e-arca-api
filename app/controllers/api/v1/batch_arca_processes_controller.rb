@@ -4,7 +4,7 @@ module Api
       before_action :set_batch, only: %i[show retry]
 
       def index
-        batches = policy_scope(BatchArcaProcess)
+        batches = policy_scope(BatchArcaProcess).not_all_invoices_failed
         batches = batches.non_superseded unless params[:include_retried].in?(%w[true 1])
         result  = pagination_result(batches.order(created_at: :desc))
         render_paginated(result, serializer: BatchArcaProcessSerializer)
