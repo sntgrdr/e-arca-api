@@ -80,6 +80,16 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
         service.call
         expect(batch.reload.failed_invoices).to eq(1)
       end
+
+      it "sets processed_invoices to the count that succeeded before the failure" do
+        service.call
+        expect(batch.reload.processed_invoices).to eq(1)
+      end
+
+      it "sets batch.error_message to the ARCA error string" do
+        service.call
+        expect(batch.reload.error_message).to eq("Error 1234: Dato inválido")
+      end
     end
 
     context "when ARCA times out but invoice was actually authorized (reconciliation)" do
@@ -101,6 +111,43 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
         invoice1.reload
         expect(invoice1.cae).to eq("71234567890123")
         expect(invoice1.afip_status).to eq("authorized")
+      end
+
+      it "marks the batch as completed" do
+        service.call
+        expect(batch.reload.status).to eq("completed")
+      end
+
+      it "marks all join records as authorized" do
+        service.call
+        expect(batch.batch_arca_process_invoices.pluck(:arca_status).uniq).to eq(["authorized"])
+      end
+
+      it "sets processed_invoices to total_invoices" do
+        service.call
+        expect(batch.reload.processed_invoices).to eq(3)
+      end
+    end
+
+    context "when a join record is already authorized (retry idempotency)" do
+      before do
+        batch.batch_arca_process_invoices.find_by(invoice: invoice1).update!(arca_status: :authorized)
+      end
+
+      it "does not send invoice1 to ARCA again" do
+        call_count = 0
+        allow_any_instance_of(Invoices::Development::SendToArcaService).to receive(:call) do
+          call_count += 1
+          arca_success
+        end
+        service.call
+        expect(call_count).to eq(2)
+      end
+
+      it "marks the batch as completed" do
+        allow_any_instance_of(Invoices::Development::SendToArcaService).to receive(:call).and_return(arca_success)
+        service.call
+        expect(batch.reload.status).to eq("completed")
       end
     end
   end

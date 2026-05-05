@@ -132,6 +132,36 @@ RSpec.describe BatchArca::CreateService, type: :service do
       end
     end
 
+    context "when invoice_ids contain IDs from another user" do
+      let(:other_user)   { create(:user) }
+      let(:other_iva)    { create(:iva, user: other_user) }
+      let(:other_client) { create(:client, user: other_user, iva: other_iva) }
+      let(:other_sp)     { create(:sell_point, user: other_user) }
+      let(:other_invoices) do
+        create_list(:client_invoice, 2, user: other_user, sell_point: other_sp,
+                    client: other_client, invoice_type: "C")
+      end
+
+      it "returns an error when all IDs belong to another user" do
+        result = described_class.new(
+          user: user, invoice_ids: other_invoices.map(&:id),
+          invoice_class: "ClientInvoice", idempotency_key: "test-key-idor"
+        ).call
+        expect(result[:success]).to be false
+        expect(result[:error]).to match(/No invoices/)
+      end
+
+      it "silently excludes another user's invoices when mixed with valid IDs" do
+        mixed_ids = invoices.map(&:id) + other_invoices.map(&:id)
+        result = described_class.new(
+          user: user, invoice_ids: mixed_ids,
+          invoice_class: "ClientInvoice", idempotency_key: "test-key-mixed"
+        ).call
+        expect(result[:success]).to be true
+        expect(result[:batch].invoices.pluck(:id)).not_to include(*other_invoices.map(&:id))
+      end
+    end
+
     context "when invoice_class is not whitelisted" do
       it "returns an error without calling constantize on arbitrary input" do
         result = described_class.new(

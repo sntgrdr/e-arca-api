@@ -4,6 +4,10 @@ class BatchArcaProcessInvoiceSerializer < ActiveModel::Serializer
              :client_name
 
   # Callers must preload invoice.client to avoid N+1 (see BatchArcaProcessDetailSerializer).
+  def id
+    invoice.id
+  end
+
   def number
     invoice.number
   end

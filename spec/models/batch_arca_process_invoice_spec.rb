@@ -34,13 +34,36 @@ RSpec.describe BatchArcaProcessInvoice, type: :model do
     end
   end
 
-  describe ".unprocessed scope" do
-    it "returns pending and blocked records" do
-      pending_join   = create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: invoice, arca_status: :pending)
-      create(:client_invoice, user: user, sell_point: sell_point, client: client).tap do |inv2|
-        create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: inv2, arca_status: :authorized)
-      end
+  describe ".unprocessed" do
+    let(:inv2) { create(:client_invoice, user: user, sell_point: sell_point, client: client) }
+    let(:inv3) { create(:client_invoice, user: user, sell_point: sell_point, client: client) }
+    let(:inv4) { create(:client_invoice, user: user, sell_point: sell_point, client: client) }
+    let(:inv5) { create(:client_invoice, user: user, sell_point: sell_point, client: client) }
+
+    let!(:pending_join)    { create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: invoice, arca_status: :pending) }
+    let!(:blocked_join)    { create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: inv2,    arca_status: :blocked) }
+    let!(:authorized_join) { create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: inv3,    arca_status: :authorized) }
+    let!(:processing_join) { create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: inv4,    arca_status: :processing) }
+    let!(:failed_join)     { create(:batch_arca_process_invoice, batch_arca_process: batch, invoice: inv5,    arca_status: :failed) }
+
+    it "includes pending records" do
       expect(BatchArcaProcessInvoice.unprocessed).to include(pending_join)
+    end
+
+    it "includes blocked records" do
+      expect(BatchArcaProcessInvoice.unprocessed).to include(blocked_join)
+    end
+
+    it "excludes authorized records" do
+      expect(BatchArcaProcessInvoice.unprocessed).not_to include(authorized_join)
+    end
+
+    it "excludes processing records" do
+      expect(BatchArcaProcessInvoice.unprocessed).not_to include(processing_join)
+    end
+
+    it "excludes failed records" do
+      expect(BatchArcaProcessInvoice.unprocessed).not_to include(failed_join)
     end
   end
 end

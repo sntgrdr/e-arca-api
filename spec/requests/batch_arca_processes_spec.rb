@@ -102,6 +102,29 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       get "/api/v1/batch_arca_processes/#{other_batch.id}", headers: headers
       expect(response).to have_http_status(:forbidden)
     end
+
+    it "returns 404 for a non-existent batch" do
+      get "/api/v1/batch_arca_processes/99999", headers: headers
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "surfaces arca_error from the join record on failed invoices" do
+      failed_inv = invoices.last
+      b = create(:batch_arca_process, user: user, sell_point: sell_point,
+                 invoice_type: "C", total_invoices: 1, status: :failed)
+      create(:batch_arca_process_invoice, batch_arca_process: b, invoice: failed_inv,
+             arca_status: :failed, arca_error: "Bad AFIP sequence")
+      get "/api/v1/batch_arca_processes/#{b.id}", headers: headers
+      invoice_json = JSON.parse(response.body)["invoices"].first
+      expect(invoice_json["arca_error"]).to eq("Bad AFIP sequence")
+    end
+
+    context "when not authenticated" do
+      it "returns 401" do
+        get "/api/v1/batch_arca_processes/#{batch.id}"
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe "POST /api/v1/batch_arca_processes/:id/retry" do
@@ -146,6 +169,22 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       post "/api/v1/batch_arca_processes/#{batch.id}/retry", headers: headers, as: :json
       expect(response).to have_http_status(:forbidden)
     end
+
+    it "returns 403 when the batch belongs to another user" do
+      other_user  = create(:user)
+      other_batch = create(:batch_arca_process, user: other_user,
+                           sell_point: create(:sell_point, user: other_user),
+                           status: :failed)
+      post "/api/v1/batch_arca_processes/#{other_batch.id}/retry", headers: headers, as: :json
+      expect(response).to have_http_status(:forbidden)
+    end
+
+    context "when not authenticated" do
+      it "returns 401" do
+        post "/api/v1/batch_arca_processes/#{batch.id}/retry", as: :json
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
   end
 
   describe "GET /api/v1/batch_arca_processes" do
@@ -176,7 +215,15 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       ids = body["data"].map { |b| b["id"] }
+      expect(ids).to include(visible_batch.id)
       expect(ids).not_to include(other_user_batch.id)
+    end
+
+    context "when not authenticated" do
+      it "returns 401" do
+        get "/api/v1/batch_arca_processes"
+        expect(response).to have_http_status(:unauthorized)
+      end
     end
 
     it "excludes batches where all invoices failed" do
