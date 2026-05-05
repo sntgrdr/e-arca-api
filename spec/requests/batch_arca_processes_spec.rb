@@ -149,9 +149,7 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
   end
 
   describe "GET /api/v1/batch_arca_processes" do
-    let!(:standalone_batch)    { create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C") }
-    let!(:superseded_original) { create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C") }
-    let!(:retry_child)         { create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C", parent_batch_id: superseded_original.id) }
+    let!(:visible_batch) { create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C") }
     let!(:other_user_batch) do
       other_user = create(:user)
       create(:batch_arca_process, user: other_user, sell_point: create(:sell_point, user: other_user))
@@ -163,32 +161,34 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       create(:batch_arca_process_invoice, batch_arca_process: b, invoice: inv, arca_status: :failed)
       b
     end
+    let!(:partial_batch) do
+      inv1 = create(:client_invoice, user: user, sell_point: sell_point, client: client, invoice_type: "C")
+      inv2 = create(:client_invoice, user: user, sell_point: sell_point, client: client, invoice_type: "C")
+      b    = create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C",
+                    total_invoices: 2, processed_invoices: 1, failed_invoices: 1, status: :failed)
+      create(:batch_arca_process_invoice, batch_arca_process: b, invoice: inv1, arca_status: :authorized)
+      create(:batch_arca_process_invoice, batch_arca_process: b, invoice: inv2, arca_status: :failed)
+      b
+    end
 
-    it "returns only the current user's non-superseded batches" do
+    it "returns only the current user's batches" do
       get "/api/v1/batch_arca_processes", headers: headers
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
-      expect(body["data"].length).to eq(2)
-    end
-
-    it "excludes superseded batches by default" do
-      get "/api/v1/batch_arca_processes", headers: headers
-      ids = JSON.parse(response.body)["data"].map { |b| b["id"] }
-      expect(ids).to include(standalone_batch.id, retry_child.id)
-      expect(ids).not_to include(superseded_original.id)
-    end
-
-    it "includes superseded batches when include_retried=true" do
-      get "/api/v1/batch_arca_processes?include_retried=true", headers: headers
-      body = JSON.parse(response.body)
-      expect(response).to have_http_status(:ok)
-      expect(body["data"].length).to eq(3)
+      ids = body["data"].map { |b| b["id"] }
+      expect(ids).not_to include(other_user_batch.id)
     end
 
     it "excludes batches where all invoices failed" do
       get "/api/v1/batch_arca_processes", headers: headers
       ids = JSON.parse(response.body)["data"].map { |b| b["id"] }
       expect(ids).not_to include(all_failed_batch.id)
+    end
+
+    it "shows batches with at least one authorized invoice even if others failed" do
+      get "/api/v1/batch_arca_processes", headers: headers
+      ids = JSON.parse(response.body)["data"].map { |b| b["id"] }
+      expect(ids).to include(partial_batch.id)
     end
   end
 end
