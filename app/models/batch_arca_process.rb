@@ -46,6 +46,10 @@ class BatchArcaProcess < ApplicationRecord
   validates :invoice_type,  presence: true
   validates :status,        presence: true
 
+  scope :non_superseded, -> {
+    where.not(id: where.not(parent_batch_id: nil).select(:parent_batch_id))
+  }
+
   enum :status, {
     pending:    "pending",
     processing: "processing",

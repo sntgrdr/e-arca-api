@@ -89,7 +89,10 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       expect(response).to have_http_status(:ok)
       expect(body["id"]).to eq(batch.id)
       expect(body["invoices"].length).to eq(3)
-      expect(body["invoices"].first).to include("number", "arca_status", "client_name")
+      first_invoice_json = body["invoices"].first
+      expect(first_invoice_json).to include("number", "arca_status", "client_name")
+      expect(first_invoice_json["id"]).to eq(invoices.min_by { |i| i.number.to_i }.id)
+      expect(first_invoice_json["number"]).to eq(invoices.min_by { |i| i.number.to_i }.number)
     end
 
     it "returns 403 for another user's batch" do
@@ -138,18 +141,33 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
   end
 
   describe "GET /api/v1/batch_arca_processes" do
-    before do
-      create_list(:batch_arca_process, 2, user: user, sell_point: sell_point, invoice_type: "C")
+    let!(:standalone_batch)    { create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C") }
+    let!(:superseded_original) { create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C") }
+    let!(:retry_child)         { create(:batch_arca_process, user: user, sell_point: sell_point, invoice_type: "C", parent_batch_id: superseded_original.id) }
+    let!(:other_user_batch) do
       other_user = create(:user)
-      create(:batch_arca_process, user: other_user,
-             sell_point: create(:sell_point, user: other_user))
+      create(:batch_arca_process, user: other_user, sell_point: create(:sell_point, user: other_user))
     end
 
-    it "returns only the current user's batches" do
+    it "returns only the current user's non-superseded batches" do
       get "/api/v1/batch_arca_processes", headers: headers
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       expect(body["data"].length).to eq(2)
+    end
+
+    it "excludes superseded batches by default" do
+      get "/api/v1/batch_arca_processes", headers: headers
+      ids = JSON.parse(response.body)["data"].map { |b| b["id"] }
+      expect(ids).to include(standalone_batch.id, retry_child.id)
+      expect(ids).not_to include(superseded_original.id)
+    end
+
+    it "includes superseded batches when include_retried=true" do
+      get "/api/v1/batch_arca_processes?include_retried=true", headers: headers
+      body = JSON.parse(response.body)
+      expect(response).to have_http_status(:ok)
+      expect(body["data"].length).to eq(3)
     end
   end
 end
