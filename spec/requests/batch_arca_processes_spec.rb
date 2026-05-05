@@ -110,32 +110,40 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
 
     let(:batch) do
       b = create(:batch_arca_process, user: user, sell_point: sell_point,
-                 invoice_type: "C", total_invoices: 3, status: :failed)
+                 invoice_type: "C", total_invoices: 3, status: :failed,
+                 processed_invoices: 1, failed_invoices: 2)
       create(:batch_arca_process_invoice, batch_arca_process: b, invoice: invoices[0], arca_status: :authorized)
       create(:batch_arca_process_invoice, batch_arca_process: b, invoice: failed_invoice,  arca_status: :failed, arca_error: "Error ARCA")
       create(:batch_arca_process_invoice, batch_arca_process: b, invoice: blocked_invoice, arca_status: :blocked)
       b
     end
 
-    it "creates a new batch with failed + blocked invoices" do
-      batch_id = batch.id  # force evaluation before measuring count
+    it "resets failed + blocked invoices to pending on the same batch" do
+      batch_id = batch.id
       expect {
-        post "/api/v1/batch_arca_processes/#{batch_id}/retry",
-             params: { idempotency_key: "retry-idem-001" },
-             headers: headers, as: :json
-      }.to change(BatchArcaProcess, :count).by(1)
+        post "/api/v1/batch_arca_processes/#{batch_id}/retry", headers: headers, as: :json
+      }.not_to change(BatchArcaProcess, :count)
 
-      expect(response).to have_http_status(:created)
+      expect(response).to have_http_status(:ok)
       body = JSON.parse(response.body)
-      expect(body["parent_batch_id"]).to eq(batch.id)
-      expect(body["total_invoices"]).to eq(2)
+      expect(body["id"]).to eq(batch_id)
+      expect(body["status"]).to eq("pending")
+      expect(body["failed_invoices"]).to eq(0)
+      expect(body["processed_invoices"]).to eq(1)
+
+      join_statuses = batch.batch_arca_process_invoices.reload.pluck(:arca_status)
+      expect(join_statuses).to contain_exactly("authorized", "pending", "pending")
+    end
+
+    it "enqueues a BatchArcaProcessJob for the same batch" do
+      expect {
+        post "/api/v1/batch_arca_processes/#{batch.id}/retry", headers: headers, as: :json
+      }.to have_enqueued_job(BatchArcaProcessJob).with(batch.id)
     end
 
     it "returns 403 when batch is not retryable" do
       batch.update!(status: :completed)
-      post "/api/v1/batch_arca_processes/#{batch.id}/retry",
-           params: { idempotency_key: "retry-idem-002" },
-           headers: headers, as: :json
+      post "/api/v1/batch_arca_processes/#{batch.id}/retry", headers: headers, as: :json
       expect(response).to have_http_status(:forbidden)
     end
   end

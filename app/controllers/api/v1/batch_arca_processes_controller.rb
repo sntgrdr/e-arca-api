@@ -36,16 +36,10 @@ module Api
       def retry
         authorize @batch, :retry?
 
-        result = BatchArca::CreateService.new(
-          user:            current_user,
-          invoice_ids:     pending_invoice_ids_from(@batch),
-          invoice_class:   @batch.invoice_class,
-          idempotency_key: retry_params[:idempotency_key],
-          parent_batch_id: @batch.id
-        ).call
+        result = BatchArca::RetryService.new(batch: @batch).call
 
         if result[:success]
-          render json: result[:batch], serializer: BatchArcaProcessSerializer, status: :created
+          render json: result[:batch], serializer: BatchArcaProcessSerializer, status: :ok
         else
           render json: { error: { code: "invalid_retry", message: result[:error] } },
                  status: :unprocessable_entity
@@ -62,17 +56,6 @@ module Api
         params.require(:batch_arca_process).permit(:invoice_class, :idempotency_key, invoice_ids: [])
       end
 
-      def retry_params
-        params.permit(:idempotency_key)
-      end
-
-      def pending_invoice_ids_from(batch)
-        batch.batch_arca_process_invoices
-             .where(arca_status: %w[failed blocked])
-             .joins(:invoice)
-             .order(Arel.sql("CAST(invoices.number AS INTEGER) ASC"))
-             .pluck(:invoice_id)
-      end
     end
   end
 end
