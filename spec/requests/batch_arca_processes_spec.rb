@@ -83,13 +83,13 @@ RSpec.describe "Api::V1::BatchArcaProcesses", type: :request do
       b
     end
 
-    it "returns the batch with batch_arca_process_invoices array" do
+    it "returns the batch with invoices array" do
       get "/api/v1/batch_arca_processes/#{batch.id}", headers: headers
       body = JSON.parse(response.body)
       expect(response).to have_http_status(:ok)
       expect(body["id"]).to eq(batch.id)
-      expect(body["batch_arca_process_invoices"].length).to eq(3)
-      expect(body["batch_arca_process_invoices"].first).to include("number", "arca_status", "client_name")
+      expect(body["invoices"].length).to eq(3)
+      expect(body["invoices"].first).to include("number", "arca_status", "client_name")
     end
 
     it "returns 403 for another user's batch" do
