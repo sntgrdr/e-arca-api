@@ -1,10 +1,11 @@
 module Api
   module V1
     class SellPointsController < BaseController
-      before_action :set_sell_point, only: %i[show update destroy]
+      before_action :set_sell_point, only: %i[show update destroy deactivate reactivate]
 
       def index
-        result = pagination_result(policy_scope(SellPoint).active)
+        scope = params[:status] == "inactive" ? policy_scope(SellPoint).where(active: false) : policy_scope(SellPoint).active
+        result = pagination_result(scope)
         render_paginated(result, serializer: SellPointSerializer)
       end
 
@@ -40,6 +41,18 @@ module Api
         else
           render_errors(@sell_point.errors.full_messages)
         end
+      end
+
+      def deactivate
+        authorize @sell_point
+        @sell_point.update!(active: false)
+        render json: @sell_point, serializer: SellPointSerializer
+      end
+
+      def reactivate
+        authorize @sell_point
+        @sell_point.update!(active: true)
+        render json: @sell_point, serializer: SellPointSerializer
       end
 
       private

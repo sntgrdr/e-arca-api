@@ -1,10 +1,11 @@
 module Api
   module V1
     class ItemGroupsController < BaseController
-      before_action :set_item_group, only: %i[show update destroy]
+      before_action :set_item_group, only: %i[show update destroy deactivate reactivate]
 
       def index
-        result = pagination_result(policy_scope(ItemGroup).active)
+        scope = params[:status] == "inactive" ? policy_scope(ItemGroup).where(active: false) : policy_scope(ItemGroup).active
+        result = pagination_result(scope)
         render_paginated(result, serializer: ItemGroupSerializer)
       end
 
@@ -37,6 +38,18 @@ module Api
         authorize @item_group
         @item_group.destroy!
         head :no_content
+      end
+
+      def deactivate
+        authorize @item_group
+        @item_group.update!(active: false)
+        render json: @item_group, serializer: ItemGroupSerializer
+      end
+
+      def reactivate
+        authorize @item_group
+        @item_group.update!(active: true)
+        render json: @item_group, serializer: ItemGroupSerializer
       end
 
       private

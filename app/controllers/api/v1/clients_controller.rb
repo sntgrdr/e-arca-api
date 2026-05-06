@@ -4,23 +4,10 @@ module Api
       before_action :set_client, only: %i[show update destroy deactivate reactivate]
 
       def index
-        if params[:tax_condition].present?
-          invalid = Array(params[:tax_condition]).reject { |v| Client.tax_conditions.key?(v) }
-          if invalid.any?
-            skip_policy_scope
-            return render json: {
-              error: { code: "invalid_param", message: "Unknown tax_condition: #{invalid.join(', ')}" }
-            }, status: :unprocessable_entity
-          end
-        end
+        return if validate_tax_condition_param!
 
-        base_scope = if params[:status] == "inactive"
-          policy_scope(Client).where(active: false)
-        else
-          policy_scope(Client).active
-        end
-        base_scope = base_scope.includes(:iva, :client_group)
-        filtered = ::Filters::ClientsFilterService.new(params, base_scope).call
+        scope = policy_scope(Client).includes(:iva, :client_group)
+        filtered = ::Filters::ClientsFilterService.new(params, scope).call
         result = pagination_result(filtered)
         render_paginated(result, serializer: ClientSerializer)
       end
@@ -94,16 +81,39 @@ module Api
         render json: { reactivated: updated }
       end
 
+      def bulk_destroy
+        authorize Client, :bulk_destroy?
+        ids = bulk_ids_param
+        return render_bulk_ids_error if ids.nil?
+
+        scope = policy_scope(Client)
+        result = ::Bulk::DestroyClientsService.new(scope: scope, ids: ids).call
+        render json: result
+      end
+
       private
 
       def set_client
         @client = Client.where(user_id: current_user.id).find(params[:id])
       end
 
+      def validate_tax_condition_param!
+        return unless params[:tax_condition].present?
+
+        invalid = Array(params[:tax_condition]).reject { |v| Client.tax_conditions.key?(v) }
+        return unless invalid.any?
+
+        skip_policy_scope
+        render json: {
+          error: { code: "invalid_param", message: "Unknown tax_condition: #{invalid.join(', ')}" }
+        }, status: :unprocessable_entity
+        true
+      end
+
       def client_params
         params.require(:client).permit(
           :legal_name, :legal_number, :tax_condition, :name,
-          :active, :iva_id, :client_group_id, :dni
+          :active, :iva_id, :client_group_id, :dni, :email
         )
       end
     end

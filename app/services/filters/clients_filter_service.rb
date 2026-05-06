@@ -2,17 +2,26 @@ module Filters
   class ClientsFilterService < BaseFilterService
     def call
       result = scope.includes(:client_group)
+      result = filter_by_status(result)
       result = filter_by_name(result)
       result = filter_by_legal_number(result)
       result = filter_by_tax_condition(result)
       result = filter_by_client_group_id(result)
-      result
+      result.order(created_at: :desc)
     rescue StandardError => e
       Rails.logger.error("ClientsFilterService error: #{e.message}")
       scope.includes(:client_group)
     end
 
     private
+
+    def filter_by_status(result)
+      if params[:status] == "inactive"
+        result.where(active: false)
+      else
+        result.where(active: true)
+      end
+    end
 
     # Searches both legal_name and commercial name (OR logic)
     def filter_by_name(result)

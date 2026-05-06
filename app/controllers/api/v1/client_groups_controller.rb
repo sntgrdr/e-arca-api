@@ -1,10 +1,11 @@
 module Api
   module V1
     class ClientGroupsController < BaseController
-      before_action :set_client_group, only: %i[show update destroy]
+      before_action :set_client_group, only: %i[show update destroy deactivate reactivate]
 
       def index
-        result = pagination_result(policy_scope(ClientGroup).active)
+        scope = params[:status] == "inactive" ? policy_scope(ClientGroup).where(active: false) : policy_scope(ClientGroup).active
+        result = pagination_result(scope)
         render_paginated(result, serializer: ClientGroupSerializer)
       end
 
@@ -37,6 +38,18 @@ module Api
         authorize @client_group
         @client_group.destroy!
         head :no_content
+      end
+
+      def deactivate
+        authorize @client_group
+        @client_group.update!(active: false)
+        render json: @client_group, serializer: ClientGroupSerializer
+      end
+
+      def reactivate
+        authorize @client_group
+        @client_group.update!(active: true)
+        render json: @client_group, serializer: ClientGroupSerializer
       end
 
       private

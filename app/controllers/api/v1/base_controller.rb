@@ -70,6 +70,21 @@ module Api
       def arca_service_module
         Rails.env.production? ? Invoices::Production : Invoices::Development
       end
+
+      # Returns an array of integer IDs from params[:ids], or nil if invalid.
+      # Callers should render_bulk_ids_error when this returns nil.
+      def bulk_ids_param
+        ids = Array(params[:ids]).map(&:to_i).select(&:positive?).uniq
+        return nil if ids.empty? || ids.size > 500
+
+        ids
+      end
+
+      def render_bulk_ids_error
+        render json: {
+          error: { code: "invalid_param", message: "ids must be a non-empty array of up to 500 integers" }
+        }, status: :unprocessable_entity
+      end
     end
   end
 end
