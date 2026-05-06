@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_28_155731) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_06_181536) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -41,6 +41,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_155731) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "batch_arca_process_invoices", force: :cascade do |t|
+    t.text "arca_error"
+    t.string "arca_status", default: "pending", null: false
+    t.bigint "batch_arca_process_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id", null: false
+    t.datetime "processed_at"
+    t.datetime "updated_at", null: false
+    t.index ["arca_status"], name: "index_batch_arca_process_invoices_on_arca_status"
+    t.index ["batch_arca_process_id", "invoice_id"], name: "idx_batch_arca_invoices_uniqueness", unique: true
+    t.index ["batch_arca_process_id"], name: "index_batch_arca_process_invoices_on_batch_arca_process_id"
+    t.index ["invoice_id"], name: "index_batch_arca_process_invoices_on_invoice_id"
+  end
+
+  create_table "batch_arca_processes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.integer "failed_invoices", default: 0, null: false
+    t.string "idempotency_key"
+    t.string "invoice_class", null: false
+    t.string "invoice_type", null: false
+    t.integer "processed_invoices", default: 0, null: false
+    t.bigint "sell_point_id", null: false
+    t.string "status", default: "pending", null: false
+    t.integer "total_invoices", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["sell_point_id"], name: "index_batch_arca_processes_on_sell_point_id"
+    t.index ["status"], name: "index_batch_arca_processes_on_status"
+    t.index ["user_id", "idempotency_key"], name: "index_batch_arca_processes_on_user_id_and_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
+    t.index ["user_id"], name: "index_batch_arca_processes_on_user_id"
   end
 
   create_table "batch_invoice_process_clients", force: :cascade do |t|
@@ -403,6 +436,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_28_155731) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "batch_arca_process_invoices", "batch_arca_processes"
+  add_foreign_key "batch_arca_process_invoices", "invoices"
+  add_foreign_key "batch_arca_processes", "sell_points"
+  add_foreign_key "batch_arca_processes", "users"
   add_foreign_key "batch_invoice_process_clients", "batch_invoice_processes"
   add_foreign_key "batch_invoice_process_clients", "clients"
   add_foreign_key "batch_invoice_process_items", "batch_invoice_processes"
