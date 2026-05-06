@@ -14,7 +14,7 @@ RSpec.describe Invoices::ReconcileWithArcaService, type: :service do
 
   before do
     allow(Invoices::Development::AuthWithArcaService).to receive_message_chain(:new, :call)
-      .and_return(["fake_token", "fake_sign"])
+      .and_return([ "fake_token", "fake_sign" ])
   end
 
   describe "#call" do
