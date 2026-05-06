@@ -1,7 +1,7 @@
 module Constants
   module ArcaIntegration
-    module Production
-      module FeCompConsultar
+    module Development
+      module FeCompConsult
         TEMPLATE = <<~XML.freeze
           <?xml version="1.0" encoding="utf-8"?>
           <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"

@@ -43,7 +43,7 @@ module BatchArca
     end
 
     def reconcile_or_fail(join, error_msg)
-      reconciliation = consultar_service(join.invoice).call
+      reconciliation = consult_service(join.invoice).call
 
       if reconciliation[:authorized]
         persist_reconciled_success(join.invoice, reconciliation)
@@ -88,8 +88,8 @@ module BatchArca
       arca_module.const_get(:SendToArcaService).new(invoice: invoice)
     end
 
-    def consultar_service(invoice)
-      arca_module.const_get(:FeCompConsultarService).new(
+    def consult_service(invoice)
+      arca_module.const_get(:FeCompConsultService).new(
         invoice_number:    invoice.number,
         sell_point_number: invoice.sell_point.number,
         afip_code:         invoice.afip_code,

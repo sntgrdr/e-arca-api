@@ -1,7 +1,7 @@
 module Invoices
-  module Development
-    class FeCompConsultarService
-      URL = "https://wswhomo.afip.gov.ar/wsfev1/service.asmx".freeze
+  module Production
+    class FeCompConsultService
+      URL = "https://servicios1.afip.gov.ar/wsfev1/service.asmx".freeze
 
       def initialize(invoice_number:, sell_point_number:, afip_code:, legal_number:)
         @invoice_number    = invoice_number.to_s
@@ -11,7 +11,7 @@ module Invoices
       end
 
       def call
-        @token, @sign = Invoices::Development::AuthWithArcaService.new(
+        @token, @sign = Invoices::Production::AuthWithArcaService.new(
           legal_number: @legal_number
         ).call
 
@@ -21,7 +21,7 @@ module Invoices
       rescue Faraday::TimeoutError, Faraday::ConnectionFailed
         raise
       rescue StandardError => e
-        Rails.logger.error("[FeCompConsultarService DEV] #{e.class}: #{e.message}")
+        Rails.logger.error("[FeCompConsultService] #{e.class}: #{e.message}")
         { authorized: false, cae: nil, error: e.message }
       end
 
@@ -33,7 +33,7 @@ module Invoices
       def sign  = @sign
 
       def build_xml
-        ERB.new(Constants::ArcaIntegration::Development::FeCompConsultar::TEMPLATE).result(binding)
+        ERB.new(Constants::ArcaIntegration::Production::FeCompConsult::TEMPLATE).result(binding)
       end
 
       def send_request(xml)

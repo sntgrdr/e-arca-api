@@ -54,7 +54,7 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
           call_count += 1
           call_count == 1 ? arca_success : arca_failure
         end
-        allow_any_instance_of(Invoices::Development::FeCompConsultarService).to receive(:call)
+        allow_any_instance_of(Invoices::Development::FeCompConsultService).to receive(:call)
           .and_return({ authorized: false, cae: nil })
       end
 
@@ -96,7 +96,7 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
       before do
         allow_any_instance_of(Invoices::Development::SendToArcaService).to receive(:call)
           .and_raise(Faraday::TimeoutError, "timeout")
-        allow_any_instance_of(Invoices::Development::FeCompConsultarService).to receive(:call)
+        allow_any_instance_of(Invoices::Development::FeCompConsultService).to receive(:call)
           .and_return({
             authorized:          true,
             cae:                 "71234567890123",

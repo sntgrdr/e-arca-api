@@ -1,6 +1,6 @@
 require "rails_helper"
 
-RSpec.describe Invoices::Production::FeCompConsultarService, type: :service do
+RSpec.describe Invoices::Production::FeCompConsultService, type: :service do
   let(:service) do
     described_class.new(
       invoice_number: "5",
