@@ -13,13 +13,11 @@
 #  total_invoices     :integer          default(0), not null
 #  created_at         :datetime         not null
 #  updated_at         :datetime         not null
-#  parent_batch_id    :bigint
 #  sell_point_id      :bigint           not null
 #  user_id            :bigint           not null
 #
 # Indexes
 #
-#  index_batch_arca_processes_on_parent_batch_id              (parent_batch_id)
 #  index_batch_arca_processes_on_sell_point_id                (sell_point_id)
 #  index_batch_arca_processes_on_status                       (status)
 #  index_batch_arca_processes_on_user_id                      (user_id)
@@ -27,7 +25,6 @@
 #
 # Foreign Keys
 #
-#  fk_rails_...  (parent_batch_id => batch_arca_processes.id)
 #  fk_rails_...  (sell_point_id => sell_points.id)
 #  fk_rails_...  (user_id => users.id)
 #
