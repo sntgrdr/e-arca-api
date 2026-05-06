@@ -54,8 +54,8 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
           call_count += 1
           call_count == 1 ? arca_success : arca_failure
         end
-        allow_any_instance_of(Invoices::Development::FeCompConsultService).to receive(:call)
-          .and_return({ authorized: false, cae: nil })
+        allow_any_instance_of(Invoices::ReconcileWithArcaService).to receive(:call)
+          .and_return({ authorized: false })
       end
 
       it "marks the batch as failed" do
@@ -96,21 +96,8 @@ RSpec.describe BatchArca::ProcessorService, type: :service do
       before do
         allow_any_instance_of(Invoices::Development::SendToArcaService).to receive(:call)
           .and_raise(Faraday::TimeoutError, "timeout")
-        allow_any_instance_of(Invoices::Development::FeCompConsultService).to receive(:call)
-          .and_return({
-            authorized:          true,
-            cae:                 "71234567890123",
-            cae_expiration:      Date.today + 10,
-            afip_authorized_at:  Time.zone.now,
-            afip_invoice_number: "5"
-          })
-      end
-
-      it "persists the CAE data on the invoice" do
-        service.call
-        invoice1.reload
-        expect(invoice1.cae).to eq("71234567890123")
-        expect(invoice1.afip_status).to eq("authorized")
+        allow_any_instance_of(Invoices::ReconcileWithArcaService).to receive(:call)
+          .and_return({ authorized: true })
       end
 
       it "marks the batch as completed" do

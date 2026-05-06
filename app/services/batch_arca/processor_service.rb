@@ -43,10 +43,9 @@ module BatchArca
     end
 
     def reconcile_or_fail(join, error_msg)
-      reconciliation = consult_service(join.invoice).call
+      result = Invoices::ReconcileWithArcaService.new(invoice: join.invoice).call
 
-      if reconciliation[:authorized]
-        persist_reconciled_success(join.invoice, reconciliation)
+      if result[:authorized]
         mark_authorized(join)
       else
         mark_failed(join, error_msg)
@@ -73,28 +72,8 @@ module BatchArca
             .update_all(arca_status: "blocked")
     end
 
-    def persist_reconciled_success(invoice, data)
-      invoice.update!(
-        cae:                 data[:cae],
-        cae_expiration:      data[:cae_expiration],
-        afip_authorized_at:  data[:afip_authorized_at],
-        afip_invoice_number: data[:afip_invoice_number],
-        afip_result:         "A",
-        afip_status:         :authorized
-      )
-    end
-
     def send_service(invoice)
       arca_module.const_get(:SendToArcaService).new(invoice: invoice)
-    end
-
-    def consult_service(invoice)
-      arca_module.const_get(:FeCompConsultService).new(
-        invoice_number:    invoice.number,
-        sell_point_number: invoice.sell_point.number,
-        afip_code:         invoice.afip_code,
-        legal_number:      invoice.user.legal_number
-      )
     end
 
     def arca_module
