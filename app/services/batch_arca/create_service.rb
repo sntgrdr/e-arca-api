@@ -1,11 +1,10 @@
 module BatchArca
   class CreateService
-    def initialize(user:, invoice_ids:, invoice_class:, idempotency_key: nil, parent_batch_id: nil)
+    def initialize(user:, invoice_ids:, invoice_class:, idempotency_key: nil)
       @user            = user
       @invoice_ids     = invoice_ids
       @invoice_class   = invoice_class
       @idempotency_key = idempotency_key
-      @parent_batch_id = parent_batch_id
     end
 
     def call
@@ -61,8 +60,7 @@ module BatchArca
           invoice_type:    invoices.first.invoice_type,
           status:          :pending,
           total_invoices:  invoices.size,
-          idempotency_key: @idempotency_key,
-          parent_batch_id: @parent_batch_id
+          idempotency_key: @idempotency_key
         )
 
         invoices.each do |invoice|

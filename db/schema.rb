@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_03_203252) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_06_181536) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -64,14 +64,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_203252) do
     t.string "idempotency_key"
     t.string "invoice_class", null: false
     t.string "invoice_type", null: false
-    t.bigint "parent_batch_id"
     t.integer "processed_invoices", default: 0, null: false
     t.bigint "sell_point_id", null: false
     t.string "status", default: "pending", null: false
     t.integer "total_invoices", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
-    t.index ["parent_batch_id"], name: "index_batch_arca_processes_on_parent_batch_id"
     t.index ["sell_point_id"], name: "index_batch_arca_processes_on_sell_point_id"
     t.index ["status"], name: "index_batch_arca_processes_on_status"
     t.index ["user_id", "idempotency_key"], name: "index_batch_arca_processes_on_user_id_and_idempotency_key", unique: true, where: "(idempotency_key IS NOT NULL)"
@@ -440,7 +438,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_03_203252) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "batch_arca_process_invoices", "batch_arca_processes"
   add_foreign_key "batch_arca_process_invoices", "invoices"
-  add_foreign_key "batch_arca_processes", "batch_arca_processes", column: "parent_batch_id"
   add_foreign_key "batch_arca_processes", "sell_points"
   add_foreign_key "batch_arca_processes", "users"
   add_foreign_key "batch_invoice_process_clients", "batch_invoice_processes"
