@@ -87,6 +87,22 @@ module Api
         render json: result
       end
 
+      def bulk_update_prices
+        authorize Item, :bulk_update_prices?
+        items_data = Array.wrap(params[:items]).map do |item_param|
+          { id: item_param[:id], price: item_param[:price] }
+        end
+
+        scope  = policy_scope(Item).active
+        result = Items::BulkUpdatePricesService.new(scope: scope, items_data: items_data).call
+
+        if result[:success]
+          render json: result[:items], each_serializer: ItemSerializer
+        else
+          render json: { error: { message: result[:error] } }, status: :unprocessable_content
+        end
+      end
+
       def autocomplete
         authorize Item
         items = Item.all_my_items(current_user.id).active
