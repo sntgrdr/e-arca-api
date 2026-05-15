@@ -22,7 +22,7 @@ RSpec.describe Items::BulkUpdatePricesService, type: :service do
     end
 
     it "back-calculates and stores price without IVA" do
-      call([{ id: item1.id, price: 121.0 }])
+      call([ { id: item1.id, price: 121.0 } ])
       # 121 / 1.21 = 100.0
       expect(item1.reload.price.to_f.round(2)).to eq(100.0)
     end
@@ -42,13 +42,13 @@ RSpec.describe Items::BulkUpdatePricesService, type: :service do
     end
 
     it "returns error when any price is zero" do
-      result = call([{ id: item1.id, price: 0 }])
+      result = call([ { id: item1.id, price: 0 } ])
       expect(result[:success]).to be false
       expect(result[:error]).to match(/greater than 0/)
     end
 
     it "returns error when any price is negative" do
-      result = call([{ id: item1.id, price: -5 }])
+      result = call([ { id: item1.id, price: -5 } ])
       expect(result[:success]).to be false
       expect(result[:error]).to match(/greater than 0/)
     end
@@ -56,7 +56,7 @@ RSpec.describe Items::BulkUpdatePricesService, type: :service do
     it "returns error when resolved item list is empty" do
       other_user = create(:user)
       other_item = create(:item, user: other_user, iva: iva, price: 100)
-      result = call([{ id: other_item.id, price: 121 }])
+      result = call([ { id: other_item.id, price: 121 } ])
       expect(result[:success]).to be false
       expect(result[:error]).to match(/No valid items/)
     end
@@ -86,6 +86,24 @@ RSpec.describe Items::BulkUpdatePricesService, type: :service do
       ])
       expect(result[:success]).to be false
       expect(item1.reload.price).to eq(original_price)
+    end
+
+    it "excludes inactive items from the scope" do
+      inactive_item = create(:item, user: user, iva: iva, price: 100, active: false)
+      original_price = inactive_item.reload.price
+      result = call([ { id: inactive_item.id, price: 121.0 } ])
+      expect(result[:success]).to be false
+      expect(result[:error]).to match(/No valid items/)
+      expect(inactive_item.reload.price).to eq(original_price)
+    end
+
+    it "deduplicates repeated IDs and updates the item once" do
+      result = call([
+        { id: item1.id, price: 121.0 },
+        { id: item1.id, price: 363.0 }
+      ])
+      expect(result[:success]).to be true
+      expect(result[:items].map(&:id).uniq).to eq([ item1.id ])
     end
   end
 end

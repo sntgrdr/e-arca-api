@@ -90,7 +90,7 @@ module Api
       def bulk_update_prices
         authorize Item, :bulk_update_prices?
         items_data = Array.wrap(params[:items]).map do |item_param|
-          { id: item_param[:id], price: item_param[:price] }
+          item_param.permit(:id, :price).to_h.symbolize_keys
         end
 
         scope  = policy_scope(Item).active
@@ -99,7 +99,7 @@ module Api
         if result[:success]
           render json: result[:items], each_serializer: ItemSerializer
         else
-          render json: { error: { message: result[:error] } }, status: :unprocessable_content
+          render json: { error: { code: "validation_error", message: result[:error] } }, status: :unprocessable_entity
         end
       end
 
