@@ -22,7 +22,7 @@ gem "discard", "~> 1.3"
 gem "pundit", "~> 2.4"
 
 # Pagination
-gem "pagy", "~> 9.0"
+gem "pagy", "~> 43.5"
 
 # Migration safety
 gem "strong_migrations", "~> 2.0"
