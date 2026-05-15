@@ -5,6 +5,7 @@ module Filters
       result = filter_by_code(result)
       result = filter_by_name(result)
       result = filter_by_iva_id(result)
+      result = filter_by_item_group_id(result)
       result = filter_by_price_from(result)
       result = filter_by_price_to(result)
       result
@@ -34,6 +35,13 @@ module Filters
       return result if values.empty?
 
       result.where(iva_id: values)
+    end
+
+    def filter_by_item_group_id(result)
+      values = array_param(:item_group_id)
+      return result if values.empty?
+
+      result.where(item_group_id: values)
     end
 
     def filter_by_price_from(result)

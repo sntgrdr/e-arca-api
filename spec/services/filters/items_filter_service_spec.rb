@@ -152,6 +152,40 @@ RSpec.describe Filters::ItemsFilterService, type: :service do
     end
   end
 
+  describe '#filter_by_item_group_id' do
+    let!(:group_a)    { create(:item_group, user: user) }
+    let!(:group_b)    { create(:item_group, user: user) }
+    let!(:item_a)     { create(:item, user: user, item_group: group_a) }
+    let!(:item_b)     { create(:item, user: user, item_group: group_b) }
+    let!(:ungrouped)  { create(:item, user: user, item_group: nil) }
+
+    context 'with a single item_group_id' do
+      let(:params) { { item_group_id: group_a.id } }
+
+      it 'returns only items belonging to that group' do
+        expect(filter).to include(item_a)
+        expect(filter).not_to include(item_b, ungrouped)
+      end
+    end
+
+    context 'with multiple item_group_ids' do
+      let(:params) { { item_group_id: [ group_a.id, group_b.id ] } }
+
+      it 'returns items belonging to any of those groups' do
+        expect(filter).to include(item_a, item_b)
+        expect(filter).not_to include(ungrouped)
+      end
+    end
+
+    context 'when item_group_id is blank' do
+      let(:params) { { item_group_id: nil } }
+
+      it 'returns the full unfiltered scope' do
+        expect(filter).to include(item_a, item_b, ungrouped)
+      end
+    end
+  end
+
   describe 'combined filters' do
     let(:iva_zero) { create(:iva, user: user, percentage: 0.0) }
     # Use 0% IVA for target so stored price == input price for assertion clarity
