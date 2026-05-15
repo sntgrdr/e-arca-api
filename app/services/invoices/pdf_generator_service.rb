@@ -15,14 +15,12 @@ module Invoices
     end
 
     def call
-      raise ArgumentError, "El comprobante debe tener CAE para generar el PDF" unless @invoice.cae.present?
-
       pdf = Prawn::Document.new(page_size: "A4", margin: 30)
       render_header(pdf)
       render_client_section(pdf)
       render_lines_table(pdf)
       render_total(pdf)
-      render_qr_code(pdf)
+      render_qr_code(pdf) if @invoice.cae.present?
       pdf.render
     end
 
@@ -38,6 +36,15 @@ module Invoices
         pdf.stroke_bounds
         pdf.move_down 6
         pdf.text @invoice.invoice_type, size: FONT_SIZE_LETTER, style: :bold, align: :center
+      end
+
+      if @invoice.cae.blank?
+        draft_width = 170
+        draft_x = (pdf.bounds.width / 2) - (draft_width / 2)
+        pdf.bounding_box([ draft_x, top - 42 ], width: draft_width) do
+          pdf.text "No válido como comprobante fiscal",
+                   size: FONT_SIZE_SMALL, style: :bold, align: :center, color: "CC0000"
+        end
       end
 
       # Left side — issuer info
@@ -64,9 +71,11 @@ module Invoices
         pdf.text "N°: #{@invoice.sell_point.number.to_s.rjust(4, '0')}-#{@invoice.number.to_s.rjust(8, '0')}", size: FONT_SIZE_NORMAL, align: :right
         pdf.text "Fecha: #{@invoice.date.strftime('%d/%m/%Y')}", size: FONT_SIZE_NORMAL, align: :right
         pdf.text "Período: #{@invoice.period.strftime('%m/%Y')}", size: FONT_SIZE_NORMAL, align: :right
-        pdf.move_down 4
-        pdf.text "CAE: #{@invoice.cae}", size: FONT_SIZE_NORMAL, align: :right
-        pdf.text "Vto. CAE: #{@invoice.cae_expiration&.strftime('%d/%m/%Y')}", size: FONT_SIZE_NORMAL, align: :right
+        if @invoice.cae.present?
+          pdf.move_down 4
+          pdf.text "CAE: #{@invoice.cae}", size: FONT_SIZE_NORMAL, align: :right
+          pdf.text "Vto. CAE: #{@invoice.cae_expiration&.strftime('%d/%m/%Y')}", size: FONT_SIZE_NORMAL, align: :right
+        end
       end
 
       pdf.move_down 10

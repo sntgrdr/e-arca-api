@@ -325,6 +325,11 @@ es:
 
   # ── ActiveRecord model error messages ────────────────────────
   activerecord:
+    attributes:
+      item:
+        code: "Código"
+        name: "Nombre"
+        price: "Precio"
     errors:
       models:
         invoice:

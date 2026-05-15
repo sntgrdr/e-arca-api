@@ -19,6 +19,7 @@
 #  index_items_on_iva_id              (iva_id)
 #  index_items_on_user_id             (user_id)
 #  index_items_on_user_id_and_active  (user_id,active)
+#  index_items_on_user_id_and_name    (user_id,name) UNIQUE
 #
 # Foreign Keys
 #
@@ -29,7 +30,7 @@ FactoryBot.define do
     association :user
     association :iva
     sequence(:code) { |n| "ITEM#{n}" }
-    name { 'Test Item' }
+    sequence(:name) { |n| "Test Item #{n}" }
     price { 1210.0 }
   end
 end

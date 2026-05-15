@@ -1,7 +1,7 @@
 module Filters
   class ItemsFilterService < BaseFilterService
     def call
-      result = scope.includes(:iva)
+      result = scope.includes(:iva, :item_group)
       result = filter_by_code(result)
       result = filter_by_name(result)
       result = filter_by_iva_id(result)
