@@ -7,7 +7,7 @@ gem "bootsnap", require: false
 gem "tzinfo-data", platforms: %i[windows jruby]
 
 # Auth
-gem "devise", "~> 5.0", ">= 5.0.3"
+gem "devise", "~> 5.0"
 gem "devise-jwt", "~> 0.13"
 
 # Serialization
