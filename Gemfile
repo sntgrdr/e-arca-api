@@ -37,7 +37,7 @@ gem "nokogiri"
 # PDF generation
 gem "prawn", "~> 2.5"
 gem "prawn-table", "~> 0.2"
-gem "rqrcode", "~> 2.2"
+gem "rqrcode", "~> 3.2"
 gem "rubyzip", "~> 2.3"
 
 # i18n
