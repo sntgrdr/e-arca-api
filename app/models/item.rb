@@ -19,6 +19,7 @@
 #  index_items_on_iva_id              (iva_id)
 #  index_items_on_user_id             (user_id)
 #  index_items_on_user_id_and_active  (user_id,active)
+#  index_items_on_user_id_and_name    (user_id,name) UNIQUE
 #
 # Foreign Keys
 #
@@ -32,12 +33,19 @@ class Item < ApplicationRecord
   validates :name, :code, :price, presence: true
   validates :price, numericality: { greater_than: 0 }
   validates :code, uniqueness: { scope: :user_id, allow_nil: true }
+  validates :name, uniqueness: { scope: :user_id }
 
   scope :all_my_items, ->(user_id) { where(user_id: user_id) }
   scope :active, -> { where(active: true) }
 
   before_validation :upcase_code
   before_save :subtract_iva_from_price, if: -> { price_changed? || iva_id_changed? }
+
+  def price_with_iva
+    return nil unless price.present? && iva&.percentage.present?
+
+    (price * (1 + iva.percentage / 100.0)).round(2)
+  end
 
   def upcase_code
     self.code = code&.upcase

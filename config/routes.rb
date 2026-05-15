@@ -53,6 +53,7 @@ Rails.application.routes.draw do
           post  :bulk_destroy
           patch :bulk_activate
           patch :bulk_deactivate
+          patch :bulk_update_prices
         end
       end
       resources :ivas do

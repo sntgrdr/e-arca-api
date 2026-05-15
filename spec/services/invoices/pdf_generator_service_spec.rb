@@ -36,11 +36,12 @@ RSpec.describe Invoices::PdfGeneratorService, type: :service do
       expect(pdf[0..3]).to eq('%PDF')
     end
 
-    it 'raises ArgumentError when invoice has no CAE' do
+    it 'generates a PDF when invoice has no CAE' do
       invoice_without_cae = create(:client_invoice, :with_lines,
                                    user: user, client: client, sell_point: sell_point)
       service = described_class.new(invoice: invoice_without_cae)
-      expect { service.call }.to raise_error(ArgumentError, /CAE/)
+      pdf = service.call
+      expect(pdf[0..3]).to eq('%PDF')
     end
 
     context 'with a type C invoice' do

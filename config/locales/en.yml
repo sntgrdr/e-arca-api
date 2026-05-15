@@ -29,3 +29,10 @@
 
 en:
   hello: "Hello world"
+
+  activerecord:
+    attributes:
+      item:
+        code: "Code"
+        name: "Name"
+        price: "Price"

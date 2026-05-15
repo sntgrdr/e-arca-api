@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_06_181536) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_15_152640) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -216,6 +216,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_06_181536) do
     t.index ["item_group_id"], name: "index_items_on_item_group_id"
     t.index ["iva_id"], name: "index_items_on_iva_id"
     t.index ["user_id", "active"], name: "index_items_on_user_id_and_active"
+    t.index ["user_id", "name"], name: "index_items_on_user_id_and_name", unique: true
     t.index ["user_id"], name: "index_items_on_user_id"
   end
 
