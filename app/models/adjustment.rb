@@ -13,7 +13,11 @@ class Adjustment < ApplicationRecord
   validates :calculation_type, presence: true, inclusion: { in: CALCULATION_TYPES }
   validates :amount, presence: true, numericality: { greater_than: 0 }
 
+  before_validation :strip_iva_from_fixed_amount,
+    if: -> { calculation_type == 'fixed' && will_save_change_to_amount? }
+
   validate :percentage_caps
+  validate :fixed_requires_item_applicable, if: -> { calculation_type == 'fixed' }
 
   scope :active,   -> { where(active: true) }
   scope :valid_on, ->(date) {
@@ -32,6 +36,25 @@ class Adjustment < ApplicationRecord
       errors.add(:amount, "no puede superar el 100% para descuentos")
     elsif adjustment_type == 'surcharge' && amount && amount > 200
       errors.add(:amount, "no puede superar el 200% para recargos")
+    end
+  end
+
+  def strip_iva_from_fixed_amount
+    item_applicable = adjustment_applicables.find { |a| a.applicable_type == 'Item' }
+    return unless item_applicable
+
+    item = Item.find_by(id: item_applicable.applicable_id)
+    return unless item&.iva&.percentage.to_f > 0
+
+    self.amount = (amount.to_d / (1 + item.iva.percentage / 100.0)).round(4)
+  end
+
+  def fixed_requires_item_applicable
+    types = adjustment_applicables.map(&:applicable_type)
+    return if types.empty?
+
+    unless types.all? { |t| t == 'Item' }
+      errors.add(:calculation_type, "fijo solo puede aplicarse a ítems específicos")
     end
   end
 end
