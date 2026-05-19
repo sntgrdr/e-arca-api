@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_195252) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_19_195415) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -269,19 +269,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_195252) do
   end
 
   create_table "lines", force: :cascade do |t|
+    t.decimal "applied_adjustment_amount", precision: 15, scale: 4
+    t.bigint "applied_adjustment_id"
+    t.string "applied_adjustment_type"
+    t.decimal "calculated_price", precision: 15, scale: 4
     t.datetime "created_at", null: false
     t.string "description"
     t.decimal "final_price", precision: 15, scale: 4
     t.bigint "item_id"
     t.bigint "iva_id"
+    t.string "line_type", default: "item", null: false
     t.bigint "lineable_id"
     t.string "lineable_type"
+    t.decimal "original_price", precision: 15, scale: 4
     t.decimal "quantity", precision: 6, scale: 2
     t.decimal "unit_price", precision: 15, scale: 4
     t.datetime "updated_at", null: false
     t.bigint "user_id"
+    t.index ["applied_adjustment_id"], name: "index_lines_on_applied_adjustment_id"
     t.index ["item_id"], name: "index_lines_on_item_id"
     t.index ["iva_id"], name: "index_lines_on_iva_id"
+    t.index ["line_type"], name: "index_lines_on_line_type"
     t.index ["user_id"], name: "index_lines_on_user_id"
   end
 
