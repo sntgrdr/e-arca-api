@@ -49,14 +49,42 @@ RSpec.describe 'Api::V1::Items', type: :request do
   end
 
   describe 'GET /api/v1/items/autocomplete' do
-    before { create(:item, user: user, iva: iva, name: 'Servicio Mensual', code: 'SERV01') }
+    let!(:matching) { create(:item, user: user, iva: iva, name: 'Servicio Mensual', code: 'SERV01') }
+    let!(:other)    { create(:item, user: user, iva: iva, name: 'Producto Z', code: 'PROD01') }
 
-    it 'searches by name' do
-      get '/api/v1/items/autocomplete', params: { q: 'serv' }, headers: headers.merge('Accept' => 'application/json')
+    it 'returns matching items with id, code, name' do
+      get '/api/v1/items/autocomplete', params: { q: 'serv' }, headers: headers
       expect(response).to have_http_status(:ok)
-      results = JSON.parse(response.body)
+      results = response.parsed_body
       expect(results.length).to eq(1)
       expect(results.first['name']).to eq('Servicio Mensual')
+      expect(results.first['code']).to eq('SERV01')
+      expect(results.first).to have_key('id')
+      expect(results.first).not_to have_key('unit_price')
+      expect(results.first).not_to have_key('iva_percentage')
+    end
+
+    it 'returns empty array when q is blank' do
+      get '/api/v1/items/autocomplete', params: { q: '' }, headers: headers
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq([])
+    end
+
+    it 'returns empty array when q is absent' do
+      get '/api/v1/items/autocomplete', headers: headers
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body).to eq([])
+    end
+
+    it 'matches by code' do
+      get '/api/v1/items/autocomplete', params: { q: 'PROD' }, headers: headers
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.first['name']).to eq('Producto Z')
+    end
+
+    it 'returns 401 when unauthenticated' do
+      get '/api/v1/items/autocomplete', params: { q: 'serv' }
+      expect(response).to have_http_status(:unauthorized)
     end
   end
 

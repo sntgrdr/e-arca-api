@@ -105,18 +105,14 @@ module Api
 
       def autocomplete
         authorize Item
+        return render json: [] if params[:q].blank?
+
         items = Item.all_my_items(current_user.id).active
                     .where("name ILIKE ? OR code ILIKE ?", "%#{params[:q]}%", "%#{params[:q]}%")
-                    .limit(10)
+                    .select(:id, :code, :name)
+                    .limit(20)
 
-        render json: items.map { |item|
-          {
-            id: item.id,
-            name: item.name,
-            unit_price: item.price,
-            iva_percentage: item.iva.percentage
-          }
-        }
+        render json: items.map { |item| { id: item.id, code: item.code, name: item.name } }
       end
 
       private
