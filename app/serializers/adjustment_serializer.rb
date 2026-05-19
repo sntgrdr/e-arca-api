@@ -11,6 +11,12 @@ class AdjustmentSerializer < ActiveModel::Serializer
     object.adjustment_applicables.first&.applicable_type
   end
 
+  attribute :applicable_names do
+    object.adjustment_applicables.filter_map do |ap|
+      ap.applicable&.try(:name)
+    end
+  end
+
   attribute :target_name do
     object.target&.try(:name) || object.target&.try(:legal_name)
   end

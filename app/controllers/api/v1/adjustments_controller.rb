@@ -4,7 +4,8 @@ module Api
       before_action :set_adjustment, only: %i[show update destroy deactivate reactivate]
 
       def index
-        adjustments = policy_scope(Adjustment).includes(:adjustment_applicables, :target)
+        adjustments = policy_scope(Adjustment)
+          .includes(:target, adjustment_applicables: :applicable)
         render json: { data: ActiveModelSerializers::SerializableResource.new(adjustments, each_serializer: AdjustmentSerializer) }
       end
 
@@ -78,7 +79,10 @@ module Api
       private
 
       def set_adjustment
-        @adjustment = Adjustment.kept.where(user_id: current_user.id).find(params[:id])
+        @adjustment = Adjustment.kept
+                                .where(user_id: current_user.id)
+                                .includes(adjustment_applicables: :applicable)
+                                .find(params[:id])
       end
 
       def adjustment_params
