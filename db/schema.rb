@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_15_152640) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_19_195252) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -41,6 +41,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_152640) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "adjustment_applicables", force: :cascade do |t|
+    t.bigint "adjustment_id", null: false
+    t.bigint "applicable_id", null: false
+    t.string "applicable_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["adjustment_id", "applicable_type", "applicable_id"], name: "idx_adjustment_applicables_unique", unique: true
+    t.index ["adjustment_id"], name: "index_adjustment_applicables_on_adjustment_id"
+    t.index ["applicable_type", "applicable_id"], name: "idx_on_applicable_type_applicable_id_29ef713aba"
+  end
+
+  create_table "adjustments", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
+    t.string "adjustment_type", null: false
+    t.decimal "amount", precision: 15, scale: 4, null: false
+    t.string "calculation_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.date "end_date"
+    t.date "start_date"
+    t.bigint "target_id", null: false
+    t.string "target_type", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["deleted_at"], name: "index_adjustments_on_deleted_at"
+    t.index ["target_type", "target_id"], name: "index_adjustments_on_target_type_and_target_id"
+    t.index ["user_id", "adjustment_type", "active"], name: "index_adjustments_on_user_id_and_adjustment_type_and_active"
+    t.index ["user_id"], name: "index_adjustments_on_user_id"
   end
 
   create_table "batch_arca_process_invoices", force: :cascade do |t|
@@ -437,6 +467,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_15_152640) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "adjustment_applicables", "adjustments"
+  add_foreign_key "adjustments", "users"
   add_foreign_key "batch_arca_process_invoices", "batch_arca_processes"
   add_foreign_key "batch_arca_process_invoices", "invoices"
   add_foreign_key "batch_arca_processes", "sell_points"
