@@ -22,6 +22,8 @@
 class ItemGroup < ApplicationRecord
   belongs_to :user
   has_many :items, dependent: :nullify
+  has_many :adjustment_applicables, as: :applicable, dependent: :destroy
+  has_many :adjustments, through: :adjustment_applicables
 
   validates :name, presence: true
   validates :name, uniqueness: { scope: :user_id, case_sensitive: false, allow_nil: true }

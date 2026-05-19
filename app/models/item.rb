@@ -30,6 +30,9 @@ class Item < ApplicationRecord
   belongs_to :user
   belongs_to :item_group, optional: true
 
+  has_many :adjustment_applicables, as: :applicable, dependent: :destroy
+  has_many :adjustments, through: :adjustment_applicables
+
   validates :name, :code, :price, presence: true
   validates :price, numericality: { greater_than: 0 }
   validates :code, uniqueness: { scope: :user_id, allow_nil: true }

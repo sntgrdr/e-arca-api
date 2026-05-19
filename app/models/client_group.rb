@@ -21,6 +21,7 @@
 class ClientGroup < ApplicationRecord
   belongs_to :user
   has_many :clients, dependent: :nullify
+  has_many :adjustments, as: :target, dependent: :destroy
 
   validates :name, presence: true
   validates :name, uniqueness: { scope: :user_id, allow_nil: true }
