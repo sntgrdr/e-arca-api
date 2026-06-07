@@ -13,7 +13,7 @@ module Adjustments
 
       if @discount
         raw             = apply(@discount, price)
-        discount_amount = [@unit_price, raw].min.round(2)
+        discount_amount = [ @unit_price, raw ].min.round(2)
         price           = (price - discount_amount).round(2)
       end
 
@@ -23,7 +23,7 @@ module Adjustments
       end
 
       {
-        calculated_price: [price, 0.0.to_d].max.round(2),
+        calculated_price: [ price, 0.0.to_d ].max.round(2),
         discount_amount:  discount_amount,
         surcharge_amount: surcharge_amount
       }
@@ -32,7 +32,7 @@ module Adjustments
     private
 
     def apply(adjustment, base_price)
-      if adjustment.calculation_type == 'percentage'
+      if adjustment.calculation_type == "percentage"
         (base_price * adjustment.amount.to_d / 100.0)
       else
         adjustment.amount.to_d

@@ -39,7 +39,7 @@ RSpec.describe "Adjustments API", type: :request do
           target_id:        client.id,
           start_date:       Date.current.iso8601,
           active:           true,
-          applicable_ids:   [item.id],
+          applicable_ids:   [ item.id ],
           applicable_type:  "Item"
         }
       }
@@ -87,7 +87,7 @@ RSpec.describe "Adjustments API", type: :request do
           target_id:        client.id,
           start_date:       Date.current.iso8601,
           active:           true,
-          applicable_ids:   [item.id],
+          applicable_ids:   [ item.id ],
           applicable_type:  "Item"
         }
       }
@@ -114,7 +114,7 @@ RSpec.describe "Adjustments API", type: :request do
 
       it "returns 422 with an error message" do
         post "/api/v1/adjustments",
-             params: fixed_params.deep_merge(adjustment: { applicable_ids: [item.id, item2.id] }),
+             params: fixed_params.deep_merge(adjustment: { applicable_ids: [ item.id, item2.id ] }),
              headers: headers
         expect(response).to have_http_status(:unprocessable_entity)
         expect(response.body).to include("mismo IVA")
@@ -130,7 +130,7 @@ RSpec.describe "Adjustments API", type: :request do
            params: { adjustment: {
              adjustment_type: "discount", calculation_type: "percentage", amount: 10.0,
              target_type: "Client", target_id: client.id,
-             applicable_ids: [item.id], applicable_type: "Item"
+             applicable_ids: [ item.id ], applicable_type: "Item"
            } },
            headers: headers
       expect(response).to have_http_status(:unprocessable_entity)
@@ -142,7 +142,7 @@ RSpec.describe "Adjustments API", type: :request do
              adjustment_type: "discount", calculation_type: "percentage", amount: 10.0,
              target_type: "Client", target_id: client.id,
              start_date: Date.current.iso8601, end_date: 1.day.ago.to_date.iso8601,
-             applicable_ids: [item.id], applicable_type: "Item"
+             applicable_ids: [ item.id ], applicable_type: "Item"
            } },
            headers: headers
       expect(response).to have_http_status(:unprocessable_entity)

@@ -35,7 +35,7 @@ RSpec.describe AdjustmentSerializer, type: :serializer do
 
       it 'returns the group name' do
         names = serialized(adj)['applicable_names']
-        expect(names).to eq(['Grupo Premium'])
+        expect(names).to eq([ 'Grupo Premium' ])
       end
     end
 

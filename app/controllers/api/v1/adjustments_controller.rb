@@ -4,8 +4,8 @@ module Api
       before_action :require_adjustments_enabled!
       before_action :set_adjustment, only: %i[show update destroy deactivate reactivate]
 
-      ALLOWED_TARGET_TYPES     = %w[Client ClientGroup].freeze
-      ALLOWED_APPLICABLE_TYPES = %w[Item ItemGroup].freeze
+      TARGET_TYPE_MODELS     = { "Client" => Client, "ClientGroup" => ClientGroup }.freeze
+      APPLICABLE_TYPE_MODELS = { "Item" => Item, "ItemGroup" => ItemGroup }.freeze
 
       def index
         adjustments = policy_scope(Adjustment)
@@ -29,12 +29,12 @@ module Api
         authorize adjustment
 
         applicable_ids, applicable_type = extract_applicables
-        return render_errors("applicable_type inválido", :unprocessable_entity) if applicable_type.present? && ALLOWED_APPLICABLE_TYPES.exclude?(applicable_type)
+        return render_errors("applicable_type inválido", :unprocessable_entity) if applicable_type.present? && APPLICABLE_TYPE_MODELS.exclude?(applicable_type)
 
         verified_ids = verify_applicable_ids(applicable_ids, applicable_type)
         return render_errors("uno o más applicables no encontrados", :not_found) if verified_ids.nil?
 
-        if adjustment.calculation_type == 'fixed'
+        if adjustment.calculation_type == "fixed"
           error = resolve_iva_for_fixed(adjustment, verified_ids, applicable_type)
           return render_errors(error, :unprocessable_entity) if error
         end
@@ -55,7 +55,7 @@ module Api
 
         if params.dig(:adjustment, :applicable_type).present? && Array(params.dig(:adjustment, :applicable_ids)).any?
           new_applicable_ids, new_applicable_type = extract_applicables
-          unless ALLOWED_APPLICABLE_TYPES.include?(new_applicable_type)
+          unless APPLICABLE_TYPE_MODELS.key?(new_applicable_type)
             return render_errors("applicable_type inválido", :unprocessable_entity)
           end
 
@@ -65,9 +65,9 @@ module Api
 
         @adjustment.assign_attributes(adjustment_params)
 
-        if @adjustment.calculation_type == 'fixed' && (new_applicable_ids || params.dig(:adjustment, :amount))
-          item_ids = new_applicable_ids || @adjustment.adjustment_applicables.where(applicable_type: 'Item').pluck(:applicable_id)
-          error = resolve_iva_for_fixed(@adjustment, item_ids, 'Item')
+        if @adjustment.calculation_type == "fixed" && (new_applicable_ids || params.dig(:adjustment, :amount))
+          item_ids = new_applicable_ids || @adjustment.adjustment_applicables.where(applicable_type: "Item").pluck(:applicable_id)
+          error = resolve_iva_for_fixed(@adjustment, item_ids, "Item")
           return render_errors(error, :unprocessable_entity) if error
         end
 
@@ -146,30 +146,33 @@ module Api
       def find_verified_target
         target_type = params.dig(:adjustment, :target_type).to_s
         target_id   = params.dig(:adjustment, :target_id).to_i
-        return nil unless ALLOWED_TARGET_TYPES.include?(target_type) && target_id.positive?
+        model       = TARGET_TYPE_MODELS[target_type]
+        return nil unless model && target_id.positive?
 
-        target_type.constantize.where(user_id: current_user.id).find_by(id: target_id)
+        model.where(user_id: current_user.id).find_by(id: target_id)
       end
 
       def extract_applicables
         ids  = Array(params.dig(:adjustment, :applicable_ids)).map(&:to_i).select(&:positive?)
         type = params.dig(:adjustment, :applicable_type).to_s.presence
-        [ids, type]
+        [ ids, type ]
       end
 
       def verify_applicable_ids(ids, type)
         return [] if ids.empty? || type.blank?
 
-        model      = type.constantize
-        owner_col  = model.column_names.include?("user_id") ? :user_id : nil
-        scope      = owner_col ? model.where(owner_col => current_user.id) : model.all
-        found      = scope.where(id: ids).pluck(:id)
+        model     = APPLICABLE_TYPE_MODELS[type]
+        return nil unless model
+
+        owner_col = model.column_names.include?("user_id") ? :user_id : nil
+        scope     = owner_col ? model.where(owner_col => current_user.id) : model.all
+        found     = scope.where(id: ids).pluck(:id)
 
         found.sort == ids.sort ? found : nil
       end
 
       def resolve_iva_for_fixed(adjustment, item_ids, applicable_type)
-        return nil if item_ids.blank? || applicable_type != 'Item'
+        return nil if item_ids.blank? || applicable_type != "Item"
 
         items   = Item.where(user_id: current_user.id).includes(:iva).where(id: item_ids)
         iva_ids = items.map(&:iva_id).uniq

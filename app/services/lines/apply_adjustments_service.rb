@@ -7,8 +7,8 @@ module Lines
 
     def call
       unless @user.adjustments_enabled?
-        @invoice.lines.where(line_type: 'adjustment').destroy_all
-        @invoice.lines.where(line_type: 'item').update_all(
+        @invoice.lines.where(line_type: "adjustment").destroy_all
+        @invoice.lines.where(line_type: "item").update_all(
           original_price: nil, calculated_price: nil,
           applied_adjustment_id: nil, applied_adjustment_type: nil,
           applied_adjustment_amount: nil
@@ -16,10 +16,10 @@ module Lines
         return
       end
 
-      @invoice.lines.where(line_type: 'adjustment').destroy_all
+      @invoice.lines.where(line_type: "adjustment").destroy_all
 
       item_lines = @invoice.lines
-                           .where(line_type: 'item')
+                           .where(line_type: "item")
                            .includes(:iva, item: :iva)
 
       item_lines.each { |line| process_line(line) }
@@ -61,7 +61,7 @@ module Lines
         original_price:            line.unit_price,
         calculated_price:          result[:calculated_price],
         applied_adjustment_id:     (discount || surcharge).id,
-        applied_adjustment_type:   discount ? 'discount' : 'surcharge',
+        applied_adjustment_type:   discount ? "discount" : "surcharge",
         applied_adjustment_amount: (result[:discount_amount] || result[:surcharge_amount])
       )
 
@@ -76,7 +76,7 @@ module Lines
       total_gross = (total_net * iva_multiplier).round(4)
 
       @invoice.lines.create!(
-        line_type:                 'adjustment',
+        line_type:                 "adjustment",
         description:               line_description(adjustment, item_line.item, type),
         quantity:                  1,
         unit_price:                total_net,
@@ -90,7 +90,7 @@ module Lines
     end
 
     def line_description(adjustment, item, type)
-      label = adjustment.calculation_type == 'percentage' ? "#{adjustment.amount.to_i}%" : "$#{adjustment.amount}"
+      label = adjustment.calculation_type == "percentage" ? "#{adjustment.amount.to_i}%" : "$#{adjustment.amount}"
       prefix = type == :discount ? "Descuento" : "Recargo"
       "#{prefix} #{label} - #{item.name}"
     end

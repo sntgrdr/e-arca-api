@@ -46,7 +46,7 @@ class Adjustment < ApplicationRecord
   validates :calculation_type, presence: true, inclusion: { in: CALCULATION_TYPES }
   validates :amount,      presence: true, numericality: { greater_than: 0 }
   validates :start_date,  presence: true
-  validates :iva_id,      presence: true, if: -> { calculation_type == 'fixed' }
+  validates :iva_id,      presence: true, if: -> { calculation_type == "fixed" }
 
   validate :percentage_caps
   validate :end_date_after_start_date
@@ -62,11 +62,11 @@ class Adjustment < ApplicationRecord
   private
 
   def percentage_caps
-    return unless calculation_type == 'percentage'
+    return unless calculation_type == "percentage"
 
-    if adjustment_type == 'discount' && amount && amount > 100
+    if adjustment_type == "discount" && amount && amount > 100
       errors.add(:amount, "no puede superar el 100% para descuentos")
-    elsif adjustment_type == 'surcharge' && amount && amount > 200
+    elsif adjustment_type == "surcharge" && amount && amount > 200
       errors.add(:amount, "no puede superar el 200% para recargos")
     end
   end

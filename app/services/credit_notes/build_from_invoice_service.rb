@@ -78,12 +78,12 @@ module CreditNotes
       # Track credited amount per item_id using BigDecimal for exact arithmetic.
       credited_per_item = Hash.new(BigDecimal("0"))
       invoice.credit_notes.each do |cn|
-        cn.lines.select { |l| l.line_type == 'item' }.each do |line|
+        cn.lines.select { |l| l.line_type == "item" }.each do |line|
           credited_per_item[line.item_id] += BigDecimal(line.final_price.to_s)
         end
       end
 
-      invoice.lines.select { |l| l.line_type == 'item' }.filter_map do |line|
+      invoice.lines.select { |l| l.line_type == "item" }.filter_map do |line|
         invoice_final = BigDecimal(line.final_price.to_s)
         credited      = credited_per_item[line.item_id]
         remaining     = invoice_final - credited
@@ -112,15 +112,15 @@ module CreditNotes
       # covers multiple items on the same invoice.
       credited_per_adj = Hash.new(BigDecimal("0"))
       invoice.credit_notes.each do |cn|
-        cn.lines.select { |l| l.line_type == 'adjustment' }.each do |line|
-          key = [line.applied_adjustment_id, line.description]
+        cn.lines.select { |l| l.line_type == "adjustment" }.each do |line|
+          key = [ line.applied_adjustment_id, line.description ]
           credited_per_adj[key] += BigDecimal(line.final_price.to_s)
         end
       end
 
-      invoice.lines.select { |l| l.line_type == 'adjustment' }.filter_map do |line|
+      invoice.lines.select { |l| l.line_type == "adjustment" }.filter_map do |line|
         invoice_final = BigDecimal(line.final_price.to_s)
-        key           = [line.applied_adjustment_id, line.description]
+        key           = [ line.applied_adjustment_id, line.description ]
         credited      = credited_per_adj[key]
         remaining     = invoice_final - credited
 
@@ -140,7 +140,7 @@ module CreditNotes
           final_price:               remaining.round(4, BigDecimal::ROUND_HALF_UP),
           iva_id:                    line.iva_id,
           user_id:                   @user.id,
-          line_type:                 'adjustment',
+          line_type:                 "adjustment",
           applied_adjustment_id:     line.applied_adjustment_id,
           applied_adjustment_type:   line.applied_adjustment_type,
           applied_adjustment_amount: (BigDecimal(line.applied_adjustment_amount.to_s) * ratio).round(4, BigDecimal::ROUND_HALF_UP)

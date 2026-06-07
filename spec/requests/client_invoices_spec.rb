@@ -141,6 +141,8 @@ RSpec.describe 'Api::V1::ClientInvoices', type: :request do
     end
 
     context 'when an adjustment exists for the client and item' do
+      let(:user) { create(:user, adjustments_enabled: true) }
+
       before do
         create(:adjustment, user: user, target: client,
                adjustment_type: 'discount', calculation_type: 'percentage',

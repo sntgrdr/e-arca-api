@@ -16,7 +16,7 @@ class CreateAdjustments < ActiveRecord::Migration[8.1]
     end
 
     add_index :adjustments, :deleted_at
-    add_index :adjustments, [:target_type, :target_id]
-    add_index :adjustments, [:user_id, :adjustment_type, :active]
+    add_index :adjustments, [ :target_type, :target_id ]
+    add_index :adjustments, [ :user_id, :adjustment_type, :active ]
   end
 end
