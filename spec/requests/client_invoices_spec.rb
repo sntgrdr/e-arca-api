@@ -110,34 +110,61 @@ RSpec.describe 'Api::V1::ClientInvoices', type: :request do
   end
 
   describe 'POST /api/v1/client_invoices' do
-    it 'creates an invoice with lines' do
-      post '/api/v1/client_invoices',
-           params: {
-             client_invoice: {
-               number: '1',
-               date: Date.current.to_s,
-               period: Date.current.to_s,
-               invoice_type: 'C',
-               total_price: 1210.0,
-               sell_point_id: sell_point.id,
-               client_id: client.id,
-               lines_attributes: [
-                 {
-                   item_id: item.id,
-                   description: 'Test service',
-                   quantity: 1,
-                   unit_price: 1000.0,
-                   final_price: 1210.0,
-                   user_id: user.id,
-                   iva_id: iva.id
-                 }
-               ]
-             }
-           },
-           headers: headers,
-           as: :json
+    let(:valid_params) do
+      {
+        client_invoice: {
+          number: '1',
+          date: Date.current.to_s,
+          period: Date.current.to_s,
+          invoice_type: 'C',
+          total_price: 1210.0,
+          sell_point_id: sell_point.id,
+          client_id: client.id,
+          lines_attributes: [
+            {
+              item_id: item.id,
+              description: 'Test service',
+              quantity: 1,
+              unit_price: 1000.0,
+              final_price: 1210.0,
+              user_id: user.id,
+              iva_id: iva.id
+            }
+          ]
+        }
+      }
+    end
 
+    it 'creates an invoice with lines' do
+      post '/api/v1/client_invoices', params: valid_params, headers: headers, as: :json
       expect(response).to have_http_status(:created)
+    end
+
+    context 'when an adjustment exists for the client and item' do
+      let(:user) { create(:user, adjustments_enabled: true) }
+
+      before do
+        create(:adjustment, user: user, target: client,
+               adjustment_type: 'discount', calculation_type: 'percentage',
+               amount: 10, start_date: 1.day.ago)
+      end
+
+      it 'auto-creates a discount adjustment line' do
+        post '/api/v1/client_invoices', params: valid_params, headers: headers, as: :json
+        body = JSON.parse(response.body)
+        adj_lines = body['lines'].select { |l| l['line_type'] == 'adjustment' }
+        expect(adj_lines.length).to eq(1)
+        expect(adj_lines.first['applied_adjustment_type']).to eq('discount')
+        expect(adj_lines.first['final_price'].to_f).to be < 0
+      end
+
+      it 'populates snapshot columns on the item line' do
+        post '/api/v1/client_invoices', params: valid_params, headers: headers, as: :json
+        body = JSON.parse(response.body)
+        item_line = body['lines'].find { |l| l['line_type'] == 'item' }
+        expect(item_line['original_price']).not_to be_nil
+        expect(item_line['calculated_price']).not_to be_nil
+      end
     end
   end
 

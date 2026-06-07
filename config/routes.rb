@@ -104,6 +104,16 @@ Rails.application.routes.draw do
       resources :batch_arca_processes, only: %i[index create show] do
         member { post :retry }
       end
+
+      resources :adjustments do
+        member do
+          patch :deactivate
+          patch :reactivate
+        end
+        collection do
+          get :resolve
+        end
+      end
     end
   end
 

@@ -1,0 +1,27 @@
+# == Schema Information
+#
+# Table name: adjustment_applicables
+#
+#  id              :bigint           not null, primary key
+#  applicable_type :string           not null
+#  created_at      :datetime         not null
+#  updated_at      :datetime         not null
+#  adjustment_id   :bigint           not null
+#  applicable_id   :bigint           not null
+#
+# Indexes
+#
+#  idx_adjustment_applicables_unique                (adjustment_id,applicable_type,applicable_id) UNIQUE
+#  idx_on_applicable_type_applicable_id_29ef713aba  (applicable_type,applicable_id)
+#  index_adjustment_applicables_on_adjustment_id    (adjustment_id)
+#
+# Foreign Keys
+#
+#  fk_rails_...  (adjustment_id => adjustments.id)
+#
+FactoryBot.define do
+  factory :adjustment_applicable do
+    association :adjustment
+    association :applicable, factory: :item
+  end
+end

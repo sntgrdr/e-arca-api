@@ -2,5 +2,5 @@ class UserSerializer < ActiveModel::Serializer
   attributes :id, :email, :legal_name, :legal_number, :dni, :name,
              :address, :city, :state, :zip_code, :country,
              :tax_condition, :activity_start, :cai,
-             :account_number, :alias_account, :active
+             :account_number, :alias_account, :active, :adjustments_enabled
 end

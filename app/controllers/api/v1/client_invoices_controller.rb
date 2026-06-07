@@ -37,8 +37,17 @@ module Api
         invoice.lines.each { |line| line.user_id = current_user.id }
         authorize invoice
 
-        if invoice.save
-          render json: invoice, serializer: ClientInvoiceSerializer, status: :created
+        saved = ClientInvoice.transaction do
+          if invoice.save
+            Lines::ApplyAdjustmentsService.new(invoice: invoice, user: current_user).call
+            true
+          else
+            false
+          end
+        end
+
+        if saved
+          render json: invoice.reload, serializer: ClientInvoiceSerializer, status: :created
         else
           render_errors(invoice.errors.full_messages)
         end
@@ -56,7 +65,16 @@ module Api
         @client_invoice.assign_attributes(client_invoice_params)
         @client_invoice.lines.each { |line| line.user_id = current_user.id if line.user_id.blank? }
 
-        if @client_invoice.save
+        saved = ClientInvoice.transaction do
+          if @client_invoice.save
+            Lines::ApplyAdjustmentsService.new(invoice: @client_invoice, user: current_user).call
+            true
+          else
+            false
+          end
+        end
+
+        if saved
           render json: @client_invoice.reload, serializer: ClientInvoiceSerializer
         else
           render_errors(@client_invoice.errors.full_messages)

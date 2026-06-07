@@ -108,7 +108,7 @@ class Invoice < ApplicationRecord
   end
 
   def at_least_one_active_line
-    active = lines.reject(&:marked_for_destruction?)
+    active = lines.reject(&:marked_for_destruction?).select { |l| l.line_type == "item" }
     errors.add(:lines, :too_short) if active.empty?
   end
 end

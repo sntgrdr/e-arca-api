@@ -23,14 +23,20 @@ class ClientInvoiceDetailSerializer < ActiveModel::Serializer
   def lines
     object.lines.map do |line|
       {
-        id:          line.id,
-        item_id:     line.item_id,
-        description: line.description,
-        quantity:    line.quantity,
-        unit_price:  line.unit_price,
-        final_price: line.final_price,
-        iva_id:      line.iva_id,
-        iva:         line.iva && {
+        id:                        line.id,
+        item_id:                   line.item_id,
+        description:               line.description,
+        quantity:                  line.quantity,
+        unit_price:                line.unit_price,
+        final_price:               line.final_price,
+        iva_id:                    line.iva_id,
+        line_type:                 line.line_type,
+        original_price:            line.original_price,
+        calculated_price:          line.calculated_price,
+        applied_adjustment_id:     line.applied_adjustment_id,
+        applied_adjustment_type:   line.applied_adjustment_type,
+        applied_adjustment_amount: line.applied_adjustment_amount,
+        iva:                       line.iva && {
           id:         line.iva.id,
           name:       line.iva.name,
           percentage: line.iva.percentage

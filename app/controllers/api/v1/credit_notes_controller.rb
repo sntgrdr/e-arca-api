@@ -158,7 +158,9 @@ module Api
           :sell_point_id, :client_id, :client_invoice_id, :period,
           lines_attributes: [
             :id, :item_id, :description, :quantity,
-            :unit_price, :final_price, :user_id, :iva_id, :_destroy
+            :unit_price, :final_price, :user_id, :iva_id, :_destroy,
+            :line_type, :applied_adjustment_id,
+            :applied_adjustment_type, :applied_adjustment_amount
           ]
         )
       end
