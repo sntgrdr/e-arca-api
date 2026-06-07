@@ -43,7 +43,7 @@ module Api
           :name, :email, :legal_name, :legal_number, :dni, :tax_condition,
           :alias_account, :account_number, :address, :zip_code,
           :city, :state, :country, :cai, :activity_start, :active,
-          :password, :password_confirmation
+          :password, :password_confirmation, :adjustments_enabled
         )
       end
     end

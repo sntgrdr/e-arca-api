@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_19_195415) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_07_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -62,12 +62,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_195415) do
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
     t.date "end_date"
-    t.date "start_date"
+    t.bigint "iva_id"
+    t.date "start_date", null: false
     t.bigint "target_id", null: false
     t.string "target_type", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.index ["deleted_at"], name: "index_adjustments_on_deleted_at"
+    t.index ["iva_id"], name: "index_adjustments_on_iva_id"
     t.index ["target_type", "target_id"], name: "index_adjustments_on_target_type_and_target_id"
     t.index ["user_id", "adjustment_type", "active"], name: "index_adjustments_on_user_id_and_adjustment_type_and_active"
     t.index ["user_id"], name: "index_adjustments_on_user_id"
@@ -430,6 +432,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_195415) do
     t.boolean "active", default: true
     t.date "activity_start"
     t.string "address"
+    t.boolean "adjustments_enabled", default: false, null: false
     t.string "alias_account", default: "", null: false
     t.text "arca_sign"
     t.text "arca_token"
@@ -476,6 +479,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_19_195415) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "adjustment_applicables", "adjustments"
+  add_foreign_key "adjustments", "ivas", validate: false
   add_foreign_key "adjustments", "users"
   add_foreign_key "batch_arca_process_invoices", "batch_arca_processes"
   add_foreign_key "batch_arca_process_invoices", "invoices"

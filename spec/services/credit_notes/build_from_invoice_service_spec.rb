@@ -236,4 +236,85 @@ RSpec.describe CreditNotes::BuildFromInvoiceService, type: :service do
       expect(line.final_price).to eq(BigDecimal("10.0000"))
     end
   end
+
+  describe 'remaining_adjustment_lines' do
+    let(:iva_21) { create(:iva, user: user, percentage: 21) }
+    let(:item_with_iva) { create(:item, user: user, iva: iva_21) }
+
+    # Invoice with one item line and one discount adjustment line
+    let(:invoice_with_adj) do
+      inv = ClientInvoice.new(
+        user: user, client: client, sell_point: sell_point,
+        number: '99', date: Date.current, period: Date.current,
+        invoice_type: 'C', total_price: 1089,
+        afip_status: :authorized, cae: '99999999999999',
+        cae_expiration: 10.days.from_now.to_date,
+        afip_invoice_number: '99', afip_result: 'A',
+        afip_authorized_at: Time.current
+      )
+      inv.lines.build(user: user, item: item_with_iva, iva: iva_21,
+                      description: 'Item con IVA', quantity: 1,
+                      unit_price: 900, final_price: 1089, line_type: 'item',
+                      original_price: 1000, calculated_price: 900,
+                      applied_adjustment_id: 1, applied_adjustment_type: 'discount',
+                      applied_adjustment_amount: 100)
+      inv.lines.build(user: user, item: nil, iva: iva_21,
+                      description: 'Descuento 10% - Item con IVA', quantity: 1,
+                      unit_price: 100, final_price: -121, line_type: 'adjustment',
+                      applied_adjustment_id: 1, applied_adjustment_type: 'discount',
+                      applied_adjustment_amount: 100)
+      inv.save!
+      inv
+    end
+
+    subject(:adj_result) do
+      described_class.call(
+        user:              user,
+        client_invoice_id: invoice_with_adj.id,
+        date:              Date.current.to_s
+      )
+    end
+
+    it 'includes the discount adjustment line in the auto-fill' do
+      adj_lines = adj_result.lines.select { |l| l.line_type == 'adjustment' }
+      expect(adj_lines.size).to eq(1)
+    end
+
+    it 'preserves negative final_price on the discount line' do
+      adj_line = adj_result.lines.find { |l| l.line_type == 'adjustment' }
+      expect(adj_line.final_price.to_f).to eq(-121.0)
+    end
+
+    it 'includes adjustment metadata on the line' do
+      adj_line = adj_result.lines.find { |l| l.line_type == 'adjustment' }
+      expect(adj_line.applied_adjustment_type).to eq('discount')
+      expect(adj_line.applied_adjustment_id).to eq(1)
+    end
+
+    it 'accounts for adjustment lines already credited' do
+      cn = CreditNote.new(
+        user: user, client: client, sell_point: sell_point,
+        client_invoice: invoice_with_adj, number: '1', date: Date.current,
+        period: invoice_with_adj.period, invoice_type: invoice_with_adj.invoice_type,
+        total_price: 968, afip_status: :draft
+      )
+      cn.lines.build(user: user, item: item_with_iva, iva: iva_21,
+                     description: 'Item con IVA', quantity: 1,
+                     unit_price: 900, final_price: 1089, line_type: 'item')
+      cn.lines.build(user: user, item: nil, iva: iva_21,
+                     description: 'Descuento 10% - Item con IVA', quantity: 1,
+                     unit_price: 100, final_price: -121, line_type: 'adjustment',
+                     applied_adjustment_id: 1, applied_adjustment_type: 'discount',
+                     applied_adjustment_amount: 100)
+      cn.save!
+
+      remaining = described_class.call(
+        user:              user,
+        client_invoice_id: invoice_with_adj.id,
+        date:              Date.current.to_s
+      )
+      adj_lines = remaining.lines.select { |l| l.line_type == 'adjustment' }
+      expect(adj_lines).to be_empty
+    end
+  end
 end

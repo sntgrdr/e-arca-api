@@ -11,6 +11,8 @@ module Adjustments
     end
 
     def call
+      return { discount: nil, surcharge: nil } unless @user.adjustments_enabled?
+
       candidates = fetch_candidates
       {
         discount:  best(candidates.select { |a| a.adjustment_type == 'discount' }),
@@ -37,7 +39,7 @@ module Adjustments
                 .valid_on(@date)
                 .where(user_id: @user.id)
                 .where(target_conditions.join(" OR "), *target_values)
-                .includes(:adjustment_applicables)
+                .includes(adjustment_applicables: :applicable)
     end
 
     def best(adjustments)

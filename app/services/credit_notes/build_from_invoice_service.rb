@@ -70,20 +70,20 @@ module CreditNotes
       if @lines_attributes.present?
         @lines_attributes.map { |line| line.except(:id).merge(user_id: @user.id) }
       else
-        remaining_lines(invoice)
+        remaining_item_lines(invoice) + remaining_adjustment_lines(invoice)
       end
     end
 
-    def remaining_lines(invoice)
+    def remaining_item_lines(invoice)
       # Track credited amount per item_id using BigDecimal for exact arithmetic.
       credited_per_item = Hash.new(BigDecimal("0"))
       invoice.credit_notes.each do |cn|
-        cn.lines.each do |line|
+        cn.lines.select { |l| l.line_type == 'item' }.each do |line|
           credited_per_item[line.item_id] += BigDecimal(line.final_price.to_s)
         end
       end
 
-      invoice.lines.filter_map do |line|
+      invoice.lines.select { |l| l.line_type == 'item' }.filter_map do |line|
         invoice_final = BigDecimal(line.final_price.to_s)
         credited      = credited_per_item[line.item_id]
         remaining     = invoice_final - credited
@@ -102,6 +102,48 @@ module CreditNotes
           final_price: remaining.round(4, BigDecimal::ROUND_HALF_UP),
           iva_id:      line.iva_id,
           user_id:     @user.id
+        }
+      end
+    end
+
+    def remaining_adjustment_lines(invoice)
+      # Use [applied_adjustment_id, description] as composite key — description
+      # includes the item name, making it unique when the same global adjustment
+      # covers multiple items on the same invoice.
+      credited_per_adj = Hash.new(BigDecimal("0"))
+      invoice.credit_notes.each do |cn|
+        cn.lines.select { |l| l.line_type == 'adjustment' }.each do |line|
+          key = [line.applied_adjustment_id, line.description]
+          credited_per_adj[key] += BigDecimal(line.final_price.to_s)
+        end
+      end
+
+      invoice.lines.select { |l| l.line_type == 'adjustment' }.filter_map do |line|
+        invoice_final = BigDecimal(line.final_price.to_s)
+        key           = [line.applied_adjustment_id, line.description]
+        credited      = credited_per_adj[key]
+        remaining     = invoice_final - credited
+
+        # Discount lines (negative): skip when fully credited (remaining >= 0)
+        # Surcharge lines (positive): skip when fully credited (remaining <= 0)
+        next if invoice_final < 0 && remaining >= 0
+        next if invoice_final >= 0 && remaining <= 0
+
+        ratio          = invoice_final != 0 ? (remaining / invoice_final).abs : BigDecimal("1")
+        remaining_unit = (BigDecimal(line.unit_price.to_s) * ratio).round(4, BigDecimal::ROUND_HALF_UP)
+
+        {
+          item_id:                   nil,
+          description:               line.description,
+          quantity:                  line.quantity,
+          unit_price:                remaining_unit,
+          final_price:               remaining.round(4, BigDecimal::ROUND_HALF_UP),
+          iva_id:                    line.iva_id,
+          user_id:                   @user.id,
+          line_type:                 'adjustment',
+          applied_adjustment_id:     line.applied_adjustment_id,
+          applied_adjustment_type:   line.applied_adjustment_type,
+          applied_adjustment_amount: (BigDecimal(line.applied_adjustment_amount.to_s) * ratio).round(4, BigDecimal::ROUND_HALF_UP)
         }
       end
     end

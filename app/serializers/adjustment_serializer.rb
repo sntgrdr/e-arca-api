@@ -1,7 +1,11 @@
 class AdjustmentSerializer < ActiveModel::Serializer
   attributes :id, :adjustment_type, :calculation_type, :amount,
-             :target_type, :target_id, :start_date, :end_date, :active,
+             :target_type, :target_id, :iva_id, :start_date, :end_date, :active,
              :created_at
+
+  attribute :iva do
+    object.iva ? { id: object.iva.id, name: object.iva.name, percentage: object.iva.percentage } : nil
+  end
 
   attribute :applicable_ids do
     object.adjustment_applicables.map(&:applicable_id)
@@ -18,6 +22,6 @@ class AdjustmentSerializer < ActiveModel::Serializer
   end
 
   attribute :target_name do
-    object.target&.try(:name) || object.target&.try(:legal_name)
+    object.target&.try(:name).presence || object.target&.try(:legal_name)
   end
 end

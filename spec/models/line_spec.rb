@@ -2,7 +2,10 @@ require 'rails_helper'
 
 RSpec.describe Line, type: :model do
   it { should belong_to(:lineable) }
-  it { should belong_to(:item).optional }
+  it 'has an optional item association (required only for item lines)' do
+    expect(build(:adjustment_line, item: nil)).to be_valid
+    expect(build(:line, line_type: 'item', item: nil)).not_to be_valid
+  end
   it { should belong_to(:user) }
   it { should belong_to(:iva).optional }
   it { should validate_presence_of(:description) }

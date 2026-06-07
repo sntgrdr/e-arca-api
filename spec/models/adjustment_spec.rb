@@ -54,7 +54,7 @@ RSpec.describe Adjustment, type: :model do
       future    = create(:adjustment, user: user, target: client,
                          start_date: 1.day.from_now, end_date: nil)
       open_end  = create(:adjustment, user: user, target: client,
-                         start_date: nil, end_date: nil)
+                         start_date: 1.week.ago, end_date: nil)
 
       result = Adjustment.valid_on(Date.current)
       expect(result).to include(in_range, open_end)

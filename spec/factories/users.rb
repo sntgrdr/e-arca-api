@@ -7,6 +7,7 @@
 #  active                 :boolean          default(TRUE)
 #  activity_start         :date
 #  address                :string
+#  adjustments_enabled    :boolean          default(FALSE), not null
 #  alias_account          :string           default(""), not null
 #  arca_sign              :text
 #  arca_token             :text

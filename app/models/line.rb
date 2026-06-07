@@ -42,4 +42,5 @@ class Line < ApplicationRecord
   validates :line_type, presence: true, inclusion: { in: TYPES }
   validates :unit_price, :quantity, numericality: { greater_than: 0 }
   validates :final_price, numericality: { greater_than: 0 }, if: -> { line_type == 'item' }
+  validates :item, presence: true, if: -> { line_type == 'item' }
 end

@@ -1,32 +1,49 @@
 require 'rails_helper'
 
 RSpec.describe Adjustment, type: :model do
-  describe 'VAT stripping on fixed amount update' do
-    let(:user)   { create(:user) }
-    let(:client) { create(:client, user: user) }
-    let(:iva)    { create(:iva, user: user, percentage: 21.0) }
-    let(:item)   { create(:item, user: user, iva: iva, price: 1210.0) }
+  let(:user)   { create(:user) }
+  let(:client) { create(:client, user: user) }
+  let(:iva)    { create(:iva, user: user, percentage: 21.0) }
 
-    it 'strips IVA from fixed amount when updating amount on an item-scoped adjustment' do
-      adj = create(:adjustment, user: user, target: client,
-                   adjustment_type: 'discount', calculation_type: 'fixed', amount: 100.0)
-      create(:adjustment_applicable, adjustment: adj, applicable: item)
-
-      adj.reload
-      adj.update!(amount: 121.0)
-
-      expect(adj.reload.amount).to be_within(0.01).of(100.0)
+  describe 'end_date_after_start_date validation' do
+    it 'is valid when end_date is after start_date' do
+      adj = build(:adjustment, user: user, target: client,
+                  start_date: Date.current, end_date: 1.week.from_now)
+      expect(adj).to be_valid
     end
 
-    it 'does not strip IVA on percentage adjustments' do
-      adj = create(:adjustment, user: user, target: client,
-                   adjustment_type: 'discount', calculation_type: 'percentage', amount: 10.0)
-      create(:adjustment_applicable, adjustment: adj, applicable: item)
+    it 'is valid when end_date is nil' do
+      adj = build(:adjustment, user: user, target: client,
+                  start_date: Date.current, end_date: nil)
+      expect(adj).to be_valid
+    end
 
-      adj.reload
-      adj.update!(amount: 15.0)
+    it 'is invalid when end_date is before start_date' do
+      adj = build(:adjustment, user: user, target: client,
+                  start_date: Date.current, end_date: 1.day.ago)
+      expect(adj).not_to be_valid
+      expect(adj.errors[:end_date]).to include("no puede ser anterior a la fecha de inicio")
+    end
+  end
 
-      expect(adj.reload.amount).to eq(15.0)
+  describe 'iva_id presence for fixed adjustments' do
+    it 'is valid for percentage adjustments without iva_id' do
+      adj = build(:adjustment, user: user, target: client,
+                  calculation_type: 'percentage', amount: 10.0)
+      expect(adj).to be_valid
+    end
+
+    it 'is invalid for fixed adjustments without iva_id' do
+      adj = build(:adjustment, user: user, target: client,
+                  calculation_type: 'fixed', amount: 100.0, iva_id: nil)
+      expect(adj).not_to be_valid
+      expect(adj.errors[:iva_id]).to be_present
+    end
+
+    it 'is valid for fixed adjustments with iva_id' do
+      adj = build(:adjustment, user: user, target: client,
+                  calculation_type: 'fixed', amount: 100.0, iva_id: iva.id)
+      expect(adj).to be_valid
     end
   end
 end

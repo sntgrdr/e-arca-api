@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Adjustments::ResolveService, type: :service do
-  let(:user)         { create(:user) }
+  let(:user)         { create(:user, adjustments_enabled: true) }
   let(:client_group) { create(:client_group, user: user) }
   let(:client)       { create(:client, user: user, client_group: client_group) }
   let(:item_group)   { create(:item_group, user: user) }
@@ -142,6 +142,23 @@ RSpec.describe Adjustments::ResolveService, type: :service do
       result = described_class.new(user: user, client: client, item: item, date: Date.current).call
       expect(result[:discount]).to eq(discount_adj)
       expect(result[:surcharge]).to eq(surcharge_adj)
+    end
+  end
+
+  context 'when adjustments_enabled is false' do
+    let(:user) { create(:user, adjustments_enabled: false) }
+
+    let!(:adjustment) do
+      adj = create(:adjustment, user: user, target: client,
+                   adjustment_type: 'discount', calculation_type: 'percentage', amount: 10.0)
+      create(:adjustment_applicable, adjustment: adj, applicable: item)
+      adj
+    end
+
+    it 'returns nil for both discount and surcharge' do
+      result = described_class.new(user: user, client: client, item: item, date: Date.current).call
+      expect(result[:discount]).to be_nil
+      expect(result[:surcharge]).to be_nil
     end
   end
 end
