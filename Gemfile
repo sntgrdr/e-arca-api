@@ -17,7 +17,7 @@ gem "active_model_serializers", "~> 0.10"
 # CORS
 gem "rack-cors", "~> 2.0"
 gem "rack-attack", "~> 6.7"
-gem "discard", "~> 1.3"
+gem "discard", "~> 2.0"
 
 # Authorization
 gem "pundit", "~> 2.4"
