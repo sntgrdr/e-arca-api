@@ -14,6 +14,10 @@
 /config/master.key
 /config/credentials/*.key
 
+# Ignore AFIP certificate files — these are stored in Cloudflare R2, never in the image.
+/config/arca_certs/
+/credentials/arca_certs/
+
 # Ignore all logfiles and tempfiles.
 /log/*
 /tmp/*

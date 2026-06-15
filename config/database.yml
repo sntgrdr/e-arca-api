@@ -16,3 +16,4 @@ production:
   database: e_arca_api_production
   username: e_arca_api
   password: <%= ENV["E_ARCA_API_DATABASE_PASSWORD"] %>
+  host: <%= ENV.fetch("DB_HOST", "e_arca_api-db") %>
