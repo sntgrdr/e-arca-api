@@ -5,6 +5,7 @@ gem "pg", "~> 1.6"
 gem "puma", ">= 5.0"
 gem "bootsnap", require: false
 gem "tzinfo-data", platforms: %i[windows jruby]
+gem "net-imap", ">= 0.6.4.1"
 
 # Auth
 gem "devise", "~> 5.0", ">= 5.0.4"
@@ -50,9 +51,10 @@ gem "paper_trail", "~> 17.0"
 group :development, :test do
   gem "debug"
   gem "dotenv-rails", "~> 3.2"
+  gem "letter_opener", "~> 1.10"
   gem "factory_bot_rails", "~> 6.5"
   gem "rspec-rails", "~> 8.0.2"
-  gem "brakeman", require: false
+  gem "brakeman", ">= 8.0.5", require: false
   gem "rubocop-rails-omakase", require: false
   gem "bundler-audit", require: false
   gem "annotaterb", require: false
